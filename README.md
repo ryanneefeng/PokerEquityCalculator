@@ -62,6 +62,7 @@ Reason:     Equity 91.2% vs pot odds 16.7%. Consider all-in or raise $600.0 tota
 ```
 
 ## Project Structure
+```
 PokerEquityCalculator/
 │
 ├── src/
@@ -76,6 +77,7 @@ PokerEquityCalculator/
 │
 ├── main.py            # Entry point and user input handling
 └── requirements.txt
+```
 
 ## Files
 
