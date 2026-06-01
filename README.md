@@ -14,12 +14,12 @@ the optimal move based on pot odds, stack size, and equity.
 
 ## Features
 
-- **Monte Carlo Simulation** -- 10,000 simulations per calculation for accurate equity estimation
-- **Full Hand Evaluator** -- detects all hand types from High Card to Straight Flush with correct tiebreaker logic
-- **Pot Odds Engine** -- compares equity against pot odds to recommend fold, call, raise small, raise, or all-in
-- **Stack-Aware Raise Sizing** -- raise recommendations account for both pot size and remaining stack
-- **Tie Rate Tracking** -- tracks split pot scenarios and factors them into effective equity
-- **Input Validation** -- handles invalid card input gracefully without crashing
+- **Monte Carlo Simulation** - 10,000 simulations per calculation for accurate equity estimation
+- **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush with correct tiebreaker logic
+- **Pot Odds Engine** - compares equity against pot odds to recommend fold, call, raise small, raise, or all-in
+- **Stack-Aware Raise Sizing** - raise recommendations account for both pot size and remaining stack
+- **Tie Rate Tracking** - tracks split pot scenarios and factors them into effective equity
+- **Input Validation** - handles invalid card input gracefully without crashing
 
 ## How It Works
 
@@ -82,65 +82,23 @@ PokerEquityCalculator/
 ├── main.py            # Entry point and user input handling
 └── requirements.txt
 ```
-
-## Files
-
-### src/deck.py
-Defines the Card and Deck classes. Each card is represented as an object
-with a rank and suit attribute. The Deck class handles building a 52 card deck,
-removing known cards, shuffling, and dealing. Using proper classes instead of
-tuples makes the code readable and allows cards to be stored in sets for O(1)
-lookup. __eq__ and __hash__ are implemented so cards can be compared and
-stored in sets correctly.
-
-### src/evaluator.py
-Contains evaluate_hand and best_hand. evaluate_hand takes exactly 5 cards
-and returns a tuple of (hand rank, tiebreaker) where hand rank is a number from
-1 (High Card) to 9 (Straight Flush) and tiebreaker is a list of card indices
-sorted highest to lowest. Returning a tuple instead of just a number means two
-hands of the same type can be compared correctly. An Ace high flush beats a
-King high flush automatically through Python's built-in tuple comparison.
-best_hand takes all 7 available cards and tries every possible 5 card
-combination using itertools.combinations to find the strongest hand.
-
-### src/equity.py
-Runs the Monte Carlo simulation. For each of 10,000 simulations it builds a
-fresh deck, removes all known cards, shuffles, deals out the remaining board
-cards, deals 2 cards to each opponent, and checks if the player wins. Ties are
-tracked separately. A fresh Deck object is created each simulation so no state
-carries over between runs.
-
-### src/decision.py
-Takes equity, tie rate, pot size, bet to call, and stack size and returns an
-action and explanation. Pot odds are calculated as bet / (pot + bet). Raise
-amounts are calculated as the minimum of a pot-based amount and a stack-based
-amount so the program never recommends risking more than a safe fraction of
-remaining chips. Absolute equity floors are enforced on top of pot odds
-comparisons so the program never recommends raising on a weak hand regardless
-of how favorable the pot odds are.
-
-### main.py
-Entry point for the program. Handles all user input with validation loops so
-the program never crashes on bad input. Parses card strings into Card objects
-and passes everything to the equity and decision modules.
-
 ## Design Decisions
 
-**Monte Carlo over exact enumeration** -- pre-flop there are over 1.7 million
+**Monte Carlo over exact enumeration** - pre-flop there are over 1.7 million
 possible board runouts. Monte Carlo trades perfect accuracy for speed and
 scales easily to any number of players. 10,000 simulations gives results
 accurate to within 1-2% in practice.
 
-**Tuple return from evaluate_hand** -- returning (hand_rank, tiebreaker)
+**Tuple return from evaluate_hand** - returning (hand_rank, tiebreaker)
 instead of just a number means Python's built-in tuple comparison handles all
 tiebreaking automatically with no additional logic needed.
 
-**Raise sizing based on both pot and stack** -- a raise recommendation based
+**Raise sizing based on both pot and stack** - a raise recommendation based
 only on pot size can suggest amounts larger than a safe fraction of the
 player's remaining chips. Sizing off the minimum of pot-based and stack-based
 amounts keeps recommendations realistic.
 
-**Absolute equity floors** -- pot odds alone can justify aggressive action with
+**Absolute equity floors** - pot odds alone can justify aggressive action with
 weak hands if the pot is large relative to the bet. Absolute equity floors
 ensure the program never recommends raising below a minimum win probability
 regardless of pot odds.
@@ -148,22 +106,22 @@ regardless of pot odds.
 ## Planned Enhancements
 
 **Phase 1**
-- Continuous game mode -- follow a single hand from pre-flop through the river,
+- Continuous game mode - follow a single hand from pre-flop through the river,
   updating equity and recommendations in real time as each street is revealed
-- Known opponent cards -- if an opponent shows their hand, factor those cards
+- Known opponent cards - if an opponent shows their hand, factor those cards
   into the equity calculation directly
 
 **Phase 2**
-- Hand strength descriptor -- identify and display the player's current hand or
+- Hand strength descriptor - identify and display the player's current hand or
   draw such as flush draw, gutshot straight draw, or top pair
-- Exact enumeration on turn and river -- switch from Monte Carlo to exact
+- Exact enumeration on turn and river - switch from Monte Carlo to exact
   enumeration when few cards remain for a perfect result
-- Multi-street projection -- show how equity changes if a specific card hits on
+- Multi-street projection - show how equity changes if a specific card hits on
   the next street
 
 **Phase 3**
-- Session tracker -- log hands, recommendations, and outcomes across a full game
-- SQL storage -- persist session history for post-game decision analysis
+- Session tracker - log hands, recommendations, and outcomes across a full game
+- SQL storage - persist session history for post-game decision analysis
 
 ## Requirements
 
