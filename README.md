@@ -8,6 +8,10 @@ A Texas Hold'em poker equity calculator built in Python that uses Monte Carlo
 simulation to estimate a player's probability of winning a hand and recommends
 the optimal move based on pot odds, stack size, and equity.
 
+> This project is an expansion of my CS50P final project, rebuilt from scratch
+> with proper software architecture, object oriented design, and additional
+> features beyond the scope of the original submission.
+
 ## Features
 
 - **Monte Carlo Simulation** -- 10,000 simulations per calculation for accurate equity estimation
