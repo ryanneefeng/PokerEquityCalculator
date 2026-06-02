@@ -24,8 +24,13 @@ def evaluate_hand(cards):
         indices.append(RANKS.index(rank))
     indices.sort()
     is_straight = (indices[-1] - indices[0] == 4) and (len(set(indices)) == 5)
-
+    
+    # Check for ace-low straight
+    if not is_straight and set(indices) == {0, 1, 2, 3, 12}:
+        is_straight = True
+        indices = [0, 1, 2, 3, 4]  # treat ace as low
     rank_counts = {}
+    
     for rank in ranks:
         if rank in rank_counts:
             rank_counts[rank] += 1

@@ -28,9 +28,11 @@ def calculate_equity(player_hand, board, num_players, simulations=10000):
             opp_best = best_hand(opponent_hand + simulated_board)
             if opp_best > your_best:
                 you_win = False
+                you_tie = False
+                break
             elif opp_best == your_best:
-                you_tie = True
                 you_win = False
+                you_tie = True
 
         if you_win:
             wins += 1
