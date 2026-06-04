@@ -49,81 +49,117 @@ No external libraries required.
 
 ### Single Calculation Mode
 ```
+===========================================                                                                      
+      Poker Hand Equity Calculatorlator> 
 ===========================================
-Poker Hand Equity Calculator
+
 How many players at the table (including you)? 4
+
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
 Card 1: A Hearts
 Card 2: A Diamonds
+
+Mode:
+1 = Single calculation, 2 = Full game mode (pre-flop to river)
+Select mode (1 or 2): 1
+
 How many cards are on the board?
 0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
 Number of board cards: 3
 Board card 1: K Hearts
 Board card 2: A Clubs
 Board card 3: 2 Spades
+
 Current pot size: $1000
 Bet to call ($0 if none): $200
 Your remaining stack size: $800
+
 Running simulation...
+
 ===========================================
-Equity:     91.2%
-Tie Rate:   0.3%
-Action:     Raise (All-In consideration)
-Reason:     Equity 91.2% vs pot odds 16.7%. Consider all-in or raise to $600.0 total
+  Equity:     91.4%
+  Tie Rate:   0.0%
+  Action:     Raise (All-In consideration)
+  Reason:     Equity 91.4% is dominant. Raise to $640.0 total
+===========================================
 ```
 ### Continuous Game Mode
 ```
 ===========================================
-Poker Hand Equity Calculator
+      Poker Hand Equity Calculator
+===========================================
+
 How many players at the table (including you)? 4
+
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: A Hearts
-Card 2: K Hearts
+Card 1: A hearts
+Card 2: K hearts
+
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
 Select mode (1 or 2): 2
+
 -- PRE-FLOP --
-Current pot size: $750
+
+Current pot size: $750 
 Bet to call ($0 if none): $250
 Your remaining stack size: $5000
+
 ===========================================
-Equity:     41.0%
-Tie Rate:   2.1%
-Action:     Call
-Reason:     Equity 41.0% beats pot odds 25.0%. Call $250.0
+  Equity:     41.0%
+  Tie Rate:   2.1%
+  Action:     Call
+  Reason:     Equity 41.0% beats pot odds 25.0%. Call $250.0
+===========================================
+
 What did you do? (fold, call, raise, check): call
-Press Enter to add the flop...
-Flop card 1: 10 Hearts
-Flop card 2: K Clubs
-Flop card 3: J Hearts
+Press Enter to continue to the Flop...
+
+Enter the 3 Flop cards:
+Flop card 1: 10 hearts
+Flop card 2: K clubs
+Flop card 3: J hearts
+
 -- FLOP --
+
 Current pot size: $3250
 Bet to call ($0 if none): $750
 Your remaining stack size: $4000
+
 ===========================================
-Equity:     72.4%
-Tie Rate:   4.6%
-Action:     Raise
-Reason:     Equity 72.4% is strong regardless of pot odds. Raise to $1200.0 total
+  Equity:     72.4%
+  Tie Rate:   4.6%
+  Action:     Raise
+  Reason:     Equity 72.4% is strong regardless of pot odds. Raise to $1200.0 total
+===========================================
+
 What did you do? (fold, call, raise, check): raise
-Press Enter to add the turn...
-Turn card: A Spades
+Press Enter to continue to the Turn...
+Turn card: A spades
+
 -- TURN --
+
 Current pot size: $10150
 Bet to call ($0 if none): $1000
 Your remaining stack size: $1000
+
 ===========================================
-Equity:     59.9%
-Tie Rate:   7.0%
-Action:     Call (All-In)
-Reason:     Equity 59.9% with tie rate 7.0%. Call all-in of $1000.0
+  Equity:     59.9%
+  Tie Rate:   7.0%
+  Action:     Call (All-In)
+  Reason:     Equity 59.9% with tie rate 7.0%. Call all-in of $1000.0
+===========================================
+
 What did you do? (fold, call, raise, check): call
-Press Enter to add the river...
-River card: Q Hearts
+Press Enter to continue to the River...
+River card: Q hearts
+
 -- RIVER --
+
 Current pot size: $12000
 Bet to call ($0 if none): $0
 Your remaining stack size: $0
+
 Equity: 100.0% (you are all-in, no action needed)
 Hand complete!
 ```
