@@ -26,13 +26,26 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         else:
             return "Check", f"Equity {equity*100:.1f}%"
 
+    # ALL-IN
+    if bet_to_call >= stack_size:
+        if effective_equity >= 0.40:
+            return "Call (All-In)", f"Equity {equity*100:.1f}% with tie rate {tie_rate*100:.1f}%. Call all-in of ${bet_to_call}"
+        else:
+            return "Fold", f"Equity {equity*100:.1f}% with tie rate {tie_rate*100:.1f}%. Fold against all-in of ${bet_to_call}"
+    
     pot_odds = bet_to_call / total_pot
 
-    if equity >= 0.65 and effective_equity >= pot_odds + 0.20:
+    #Equity override
+    if equity >= 0.75:
         raise_amount, is_all_in = cap_raise(min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2)), stack_size)
         label = "All-In" if is_all_in else f"${raise_amount}"
-        return "Raise (All-In consideration)", f"Equity {equity*100:.1f}% vs pot odds {pot_odds*100:.1f}%. Raise to {label} total"
-    elif equity >= 0.60 and effective_equity >= pot_odds + 0.20:
+        return "Raise (All-In consideration)", f"Equity {equity*100:.1f}% is dominant. Raise to {label} total"
+    elif equity >= 0.65:
+        raise_amount, is_all_in = cap_raise(min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2)), stack_size)
+        label = f"${raise_amount}"
+        return "Raise", f"Equity {equity*100:.1f}% is strong regardless of pot odds. Raise to {label} total"
+
+    if equity >= 0.55 and effective_equity >= pot_odds + 0.20:
         raise_amount, is_all_in = cap_raise(min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2)), stack_size)
         label = f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% far exceeds pot odds {pot_odds*100:.1f}%. Raise to {label} total"
