@@ -50,7 +50,7 @@ No external libraries required.
 ### Single Calculation Mode
 ```
 ===========================================                                                                      
-      Poker Hand Equity Calculatorlator> 
+      Poker Hand Equity Calculator 
 ===========================================
 
 How many players at the table (including you)? 4
