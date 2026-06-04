@@ -14,17 +14,17 @@ the optimal move based on pot odds, stack size, and equity.
 
 ## Features
 
-- **Monte Carlo Simulation** -- 10,000 simulations per calculation for accurate equity estimation
-- **Full Hand Evaluator** -- detects all hand types from High Card to Straight Flush with correct tiebreaker logic including ace-low straights
-- **Pot Odds Engine** -- compares equity against pot odds to recommend fold, call, raise small, raise, or all-in
-- **Stack-Aware Raise Sizing** -- raise recommendations account for both pot size and remaining stack
-- **Equity Override** -- strong hands (65%+ equity) receive aggressive recommendations regardless of pot odds
-- **All-In Detection** -- automatically detects when bet equals stack and simplifies to call all-in or fold
-- **Tie Rate Tracking** -- tracks split pot scenarios and factors them into effective equity
-- **Continuous Game Mode** -- follow a full hand from pre-flop through the river, with equity and recommendations updating live at each street
-- **Action Tracking** -- prompts the user for their decision after each recommendation and notes when they deviate
-- **Input Sanity Checks** -- warns the user if pot decreases or stack increases between streets
-- **Input Validation** -- handles invalid card input gracefully without crashing
+- **Monte Carlo Simulation** - 10,000 simulations per calculation for accurate equity estimation
+- **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush with correct tiebreaker logic including ace-low straights
+- **Pot Odds Engine** - compares equity against pot odds to recommend fold, call, raise small, raise, or all-in
+- **Stack-Aware Raise Sizing** - raise recommendations account for both pot size and remaining stack
+- **Equity Override** - strong hands (65%+ equity) receive aggressive recommendations regardless of pot odds
+- **All-In Detection** - automatically detects when bet equals stack and simplifies to call all-in or fold
+- **Tie Rate Tracking** - tracks split pot scenarios and factors them into effective equity
+- **Continuous Game Mode** - follow a full hand from pre-flop through the river, with equity and recommendations updating live at each street
+- **Action Tracking** - prompts the user for their decision after each recommendation and notes when they deviate
+- **Input Sanity Checks** - warns the user if pot decreases or stack increases between streets
+- **Input Validation** - handles invalid card input gracefully without crashing
 
 ## How It Works
 
@@ -146,27 +146,6 @@ PokerEquityCalculator/
 ├── LICENSE
 └── requirements.txt
 ```
-## Design Decisions
-
-**Monte Carlo over exact enumeration** - pre-flop there are over 1.7 million
-possible board runouts. Monte Carlo trades perfect accuracy for speed and
-scales easily to any number of players. 10,000 simulations gives results
-accurate to within 1-2% in practice.
-
-**Tuple return from evaluate_hand** - returning (hand_rank, tiebreaker)
-instead of just a number means Python's built-in tuple comparison handles all
-tiebreaking automatically with no additional logic needed.
-
-**Raise sizing based on both pot and stack** - a raise recommendation based
-only on pot size can suggest amounts larger than a safe fraction of the
-player's remaining chips. Sizing off the minimum of pot-based and stack-based
-amounts keeps recommendations realistic.
-
-**Absolute equity floors** - pot odds alone can justify aggressive action with
-weak hands if the pot is large relative to the bet. Absolute equity floors
-ensure the program never recommends raising below a minimum win probability
-regardless of pot odds.
-
 ## Planned Enhancements
 
 **Phase 1**
