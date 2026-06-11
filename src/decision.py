@@ -47,7 +47,6 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), stack_size)
         label = f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% is strong regardless of pot odds. Raise to {label} total"
-        return "Raise", f"Equity {equity*100:.1f}% is strong regardless of pot odds. Raise to {label} total"
 
     if equity >= 0.55 and effective_equity >= pot_odds + 0.20:
         raise_amount = min_raise(bet_to_call, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2)))

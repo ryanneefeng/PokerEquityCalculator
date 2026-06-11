@@ -49,15 +49,22 @@ No external libraries required.
 
 ### Single Calculation Mode
 ```
-===========================================                                                                      
-      Poker Hand Equity Calculator 
 ===========================================
+      Poker Hand Equity Calculator
+===========================================
+
 
 How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: A Hearts
-Card 2: A Diamonds
+Card 1: A hearts
+Card 2: A spades
+Do any opponents have known cards? (y/n): y
+How many opponents have known cards? 1
+
+Enter the 2 hole cards for opponent 1:
+Card 1: 2 clubs
+Card 2: 10 spades
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -66,22 +73,26 @@ Select mode (1 or 2): 1
 How many cards are on the board?
 0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
 Number of board cards: 3
-Board card 1: K Hearts
-Board card 2: A Clubs
-Board card 3: 2 Spades
+Board card 1: a clubs
+Board card 2: 10 hearts
+Board card 3: 10 clubs
 
-Current pot size: $1000
-Bet to call ($0 if none): $200
-Your remaining stack size: $800
+Current pot size: $10000
+Bet to call ($0 if none): $4200
+Your remaining stack size: $12000
 
 Running simulation...
 
 ===========================================
-  Equity:     91.4%
+  Equity:     95.7%
   Tie Rate:   0.0%
   Action:     Raise (All-In consideration)
-  Reason:     Equity 91.4% is dominant. Raise to $640.0 total
+  Reason:     Equity 95.7% is dominant. Raise to $8400.0 total
 ===========================================
+
+Play another hand? (y/n): n
+
+Thanks for playing!
 ```
 ### Continuous Game Mode
 ```
@@ -93,7 +104,9 @@ How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
 Card 1: A hearts
-Card 2: K hearts
+Card 2: A clubs
+
+Do any opponents have known cards? (y/n): n
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -101,67 +114,77 @@ Select mode (1 or 2): 2
 
 -- PRE-FLOP --
 
-Current pot size: $750 
-Bet to call ($0 if none): $250
-Your remaining stack size: $5000
+Current pot size: $10
+Bet to call ($0 if none): $10
+Your remaining stack size: $100
 
 ===========================================
-  Equity:     41.0%
-  Tie Rate:   2.1%
-  Action:     Call
-  Reason:     Equity 41.0% beats pot odds 25.0%. Call $250.0
-===========================================
-
-What did you do? (fold, call, raise, check): call
-Press Enter to continue to the Flop...
-
-Enter the 3 Flop cards:
-Flop card 1: 10 hearts
-Flop card 2: K clubs
-Flop card 3: J hearts
-
--- FLOP --
-
-Current pot size: $3250
-Bet to call ($0 if none): $750
-Your remaining stack size: $4000
-
-===========================================
-  Equity:     72.4%
-  Tie Rate:   4.6%
-  Action:     Raise
-  Reason:     Equity 72.4% is strong regardless of pot odds. Raise to $1200.0 total
+  Equity:     63.1%
+  Tie Rate:   0.8%
+  Action:     Raise Small or Call
+  Reason:     Equity 63.1% beats pot odds 50.0%. Raise to $20.0 total or just call $10.0
 ===========================================
 
 What did you do? (fold, call, raise, check): raise
+Press Enter to continue to the Flop...
+
+Enter the 3 Flop cards:
+Flop card 1: 10 spades
+Flop card 2: J spades
+Flop card 3: A spades
+
+-- FLOP --
+
+Current pot size: $40 
+Bet to call ($0 if none): $30
+Your remaining stack size: $90
+
+===========================================
+  Equity:     59.7%
+  Tie Rate:   2.6%
+  Action:     Raise Small or Call
+  Reason:     Equity 59.7% beats pot odds 42.9%. Raise to $60.0 total or just call $30.0
+===========================================
+
+What did you do? (fold, call, raise, check): call
 Press Enter to continue to the Turn...
-Turn card: A spades
+Turn card: 5 spades
 
 -- TURN --
 
-Current pot size: $10150
-Bet to call ($0 if none): $1000
-Your remaining stack size: $1000
+Current pot size: $130
+Bet to call ($0 if none): $30
+Your remaining stack size: $60
 
 ===========================================
-  Equity:     59.9%
-  Tie Rate:   7.0%
-  Action:     Call (All-In)
-  Reason:     Equity 59.9% with tie rate 7.0%. Call all-in of $1000.0
+  Equity:     33.1%
+  Tie Rate:   8.3%
+  Action:     Call
+  Reason:     Equity 33.1% beats pot odds 18.8%. Call $30.0
 ===========================================
 
 What did you do? (fold, call, raise, check): call
 Press Enter to continue to the River...
-River card: Q hearts
+River card: A diamonds
 
 -- RIVER --
 
-Current pot size: $12000
-Bet to call ($0 if none): $0
-Your remaining stack size: $0
+Current pot size: $220
+Bet to call ($0 if none): $30
+Your remaining stack size: $30
 
-Equity: 100.0% (you are all-in, no action needed)
+===========================================
+  Equity:     99.8%
+  Tie Rate:   0.0%
+  Action:     Call (All-In)
+  Reason:     Equity 99.8% with tie rate 0.0%. Call all-in of $30.0
+===========================================
+
+What did you do? (fold, call, raise, check): call
 Hand complete!
+Play another hand? (y/n): n
+
+Thanks for playing!
 ```
 ## Project Structure
 ```
@@ -185,16 +208,13 @@ PokerEquityCalculator/
 ## Planned Enhancements
 
 **Phase 1**
-- Known opponent cards - if an opponent shows their hand, factor those cards into the equity calculation directly
-- Play again - option to run another hand after completing a full game without restarting the program
+- Fold tracking - after each street ask if any opponents folded, update the player count, and if they showed their hand add those cards to known opponents. If all opponents fold, end the hand and award the pot
+- Known opponent card memory - in continuous game mode, track which opponents have already shown cards across streets so the user is never asked for the same information twice
 
 **Phase 2**
-- Hand strength descriptor - identify and display the player's current hand or
-  draw such as flush draw, gutshot straight draw, or top pair
-- Exact enumeration on turn and river - switch from Monte Carlo to exact
-  enumeration when few cards remain for a perfect result
-- Multi-street projection - show how equity changes if a specific card hits on
-  the next street
+- Hand strength descriptor - identify and display the player's current hand or draw such as flush draw, gutshot straight draw, or top pair
+- Exact enumeration on turn and river - switch from Monte Carlo to exact enumeration when few cards remain for a perfect result
+- Multi-street projection - show how equity changes if a specific card hits on the next street
 
 **Phase 3**
 - Session tracker - log hands, recommendations, and outcomes across a full game
