@@ -37,21 +37,26 @@ def get_player_action(reccomendation):
             return "fold"
         if action == "check":
             return "check"
+        if action == "call" and "call" in reccomendation.lower():
+            return action
         if action != reccomendation.split()[0].lower():
             print(f"You chose to {action}, instead of the recommended action: {reccomendation}. I hope luck is on your side!")
         return action
 
-def continuous_game(num_players, player_hand):
-    prev_POT = None
+def continuous_game(num_players, player_hand, known_opponents=None):
+    if known_opponents is None:
+        known_opponents = []
+
+    prev_pot = None
     prev_stack = None
 
     print ("\n-- PRE-FLOP --")
     pot_size, bet_to_call, stack_size = get_pot_info()
-    equity, tie_rate = calculate_equity(player_hand, [], num_players)
+    equity, tie_rate = calculate_equity(player_hand, [], num_players, known_opponents=known_opponents)
     action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size)
     
-    playuer_action = get_player_action(action)
-    if playuer_action == "fold":
+    player_action = get_player_action(action)
+    if player_action == "fold":
         return
     
     prev_pot = pot_size
@@ -76,7 +81,7 @@ def continuous_game(num_players, player_hand):
     prev_pot = pot_size
     prev_stack = stack_size
 
-    equity, tie_rate = calculate_equity(player_hand, board, num_players)
+    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents)
     
     if stack_size == 0:
         print(f"\n  Equity: {equity * 100:.1f}% (you are all-in, no action needed)")
@@ -101,7 +106,7 @@ def continuous_game(num_players, player_hand):
     prev_pot = pot_size
     prev_stack = stack_size
 
-    equity, tie_rate = calculate_equity(player_hand, board, num_players)
+    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents)
     
     if stack_size == 0:
         print(f"\n  Equity: {equity * 100:.1f}% (you are all-in, no action needed)")
@@ -123,13 +128,13 @@ def continuous_game(num_players, player_hand):
     if stack_size > prev_stack:
         print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
     
-    equity, tie_rate = calculate_equity(player_hand, board, num_players)
+    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents)
 
     if stack_size == 0:
         print(f"Equity: {equity * 100:.1f}% (you are all-in, no action needed)")
     else:
         action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size)
-        get_player_action(action)
+        player_action = get_player_action(action)
 
     print ("Hand complete!")
     
@@ -151,9 +156,34 @@ def get_card_input(prompt):
         except ValueError as e:
             print(f"Error: {e}. Please try again.")
 
+def get_known_opponents(num_players):
+    known_opponents = []
+    while True:
+        has_known = input("\nDo any opponents have known cards? (y/n): ").lower().strip()
+        if has_known == 'y':
+            while True:
+                try:
+                    num_known = int(input("How many opponents have known cards? "))
+                    if num_known < 1 or num_known >= num_players:
+                        print(f"Please enter a number between 1 and {num_players - 1}.")
+                        continue
+                    break
+                except ValueError:
+                    print("Please enter a valid number.")
+            for i in range(num_known):
+                print(f"\nEnter the 2 hole cards for opponent {i + 1}:")
+                opp_card1 = get_card_input("Card 1: ")
+                opp_card2 = get_card_input("Card 2: ")
+                known_opponents.append([opp_card1, opp_card2])
+            return known_opponents
+        elif has_known == 'n':
+            return known_opponents
+        else:
+            print("Please enter 'y' or 'n'.")
+
 def main():
     while True:
-        print("===========================================")
+        print("\n===========================================")
         print("      Poker Hand Equity Calculator")
         print("===========================================\n")
 
@@ -171,6 +201,7 @@ def main():
         card1 = get_card_input("Card 1: ")
         card2 = get_card_input("Card 2: ")
         player_hand = [card1, card2]
+        known_opponents = get_known_opponents(num_players)
 
         print("\nMode:")
         print("1 = Single calculation, 2 = Full game mode (pre-flop to river)")
@@ -181,8 +212,7 @@ def main():
             print("Invalid mode. Please enter 1 or 2.")
 
         if mode == '2':
-            continuous_game(num_players, player_hand)
-            return
+            continuous_game(num_players, player_hand, known_opponents=known_opponents)
         else:
             print("\nHow many cards are on the board?")
             print("0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River")
@@ -211,13 +241,13 @@ def main():
                     print("Please enter a valid number.")
 
             print("\nRunning simulation...")
-            equity, tie_rate = calculate_equity(player_hand, board, num_players)
+            equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents)
             display_results(equity, tie_rate, pot_size, bet_to_call, stack_size)
 
         #play again
         again = input("Play another hand? (y/n): ").lower().strip()
         if again != 'y':
-            print("Thanks for playing!")
+            print("\nThanks for playing!")
             break
 
 if __name__ == "__main__":
