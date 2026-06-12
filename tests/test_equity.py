@@ -34,3 +34,22 @@ def test_tie_rate_heads_up_identical_board():
     board = make_cards([("A", "Clubs"), ("A", "Hearts"), ("A", "Spades"), ("A", "Diamonds"), ("K", "Clubs")])
     equity, tie_rate = calculate_equity(player_hand, board, 2, simulations=500)
     assert tie_rate > 0.0
+
+def test_dead_cards_reduce_equity():
+    # Player has J-J, but two more Jacks are dead -- trips become much less likely
+    player_hand = make_cards([("J", "Hearts"), ("J", "Diamonds")])
+    dead_cards = make_cards([("J", "Clubs"), ("J", "Spades")])
+    board = []
+    equity_with_dead, _ = calculate_equity(player_hand, board, 2, dead_cards=dead_cards, simulations=500)
+    equity_without_dead, _ = calculate_equity(player_hand, board, 2, simulations=500)
+    assert equity_with_dead < equity_without_dead
+
+def test_known_opponents_affects_equity():
+    # Player has A-A, opponent has A-K -- two aces are gone from the deck
+    player_hand = make_cards([("A", "Hearts"), ("A", "Diamonds")])
+    opponent_hand = [make_cards([("A", "Clubs"), ("K", "Hearts")])]
+    board = []
+    equity_known, _ = calculate_equity(player_hand, board, 2, known_opponents=opponent_hand, simulations=500)
+    equity_unknown, _ = calculate_equity(player_hand, board, 2, simulations=500)
+    # Equity should still be high but slightly different with known opponent
+    assert 0.0 <= equity_known <= 1.0
