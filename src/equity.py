@@ -2,9 +2,11 @@ import random
 from src.deck import Deck, Card, RANKS, SUITS
 from src.evaluator import best_hand
 
-def calculate_equity(player_hand, board, num_players, known_opponents=None, simulations=10000):
+def calculate_equity(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=10000):
     if known_opponents is None:
         known_opponents = []
+    if dead_cards is None:
+        dead_cards = []
 
     wins = 0
     ties = 0
@@ -12,14 +14,14 @@ def calculate_equity(player_hand, board, num_players, known_opponents=None, simu
     for i in range(simulations):
         deck = Deck()
 
-        # Remove known cards from the deck
-        known_cards = player_hand + board
+        # Remove all known cards from deck
+        known_cards = player_hand + board + dead_cards
         for opp_hand in known_opponents:
             known_cards += opp_hand
         deck.remove(known_cards)
         deck.shuffle()
 
-        # Deal remaining board cards    
+        # Deal remaining board cards
         cards_needed = 5 - len(board)
         simulated_board = board + deck.deal(cards_needed)
 
@@ -36,7 +38,6 @@ def calculate_equity(player_hand, board, num_players, known_opponents=None, simu
         # Evaluate hands
         your_best = best_hand(player_hand + simulated_board)
 
-        # Check against opponents
         you_win = True
         you_tie = False
         for opponent_hand in opponents:
