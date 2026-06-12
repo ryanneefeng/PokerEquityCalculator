@@ -33,14 +33,21 @@ def get_player_action(reccomendation):
             if reccomendation.lower().startswith("fold"):
                 print("Good fold, hand over")
             else:
-                print(f"You folded, hand over")
+                print("You folded, hand over")
             return "fold"
         if action == "check":
             return "check"
         if action == "call" and "call" in reccomendation.lower():
             return action
         if action != reccomendation.split()[0].lower():
-            print(f"You chose to {action}, instead of the recommended action: {reccomendation}. I hope luck is on your side!")
+            if action == "raise" and "call" in reccomendation.lower():
+                print("Bold move. I hope luck is on your side!")
+            elif action == "call" and "raise" in reccomendation.lower():
+                print("Playing it safe. I hope you don't regret that later!")
+            elif action == "call" and "fold" in reccomendation.lower():
+                print("Risky call. I hope luck is on your side!")
+            else:
+                print(f"You chose to {action} instead of the recommended action: {reccomendation}. I hope luck is on your side!")
         return action
 
 def handle_folds(num_players, known_opponents, dead_cards):
@@ -72,15 +79,18 @@ def handle_folds(num_players, known_opponents, dead_cards):
         print("Please enter y or n.")
 
     if showed == "y":
-        while True:
-            try:
-                num_showed = int(input("How many showed their hand? "))
-                if num_showed < 1 or num_showed > num_folded:
-                    print(f"Please enter a number between 1 and {num_folded}.")
-                    continue
-                break
-            except ValueError:
-                print("Please enter a valid number.")
+        if num_folded == 1:
+            num_showed = 1
+        else:
+            while True:
+                try:
+                    num_showed = int(input("How many showed their hand? "))
+                    if num_showed < 1 or num_showed > num_folded:
+                        print(f"Please enter a number between 1 and {num_folded}.")
+                        continue
+                    break
+                except ValueError:
+                    print("Please enter a valid number.")
 
         for i in range(num_showed):
             print(f"\nEnter the 2 cards for the player who showed hand {i + 1}:")
@@ -220,31 +230,6 @@ def get_card_input(prompt):
         except ValueError as e:
             print(f"Error: {e}. Please try again.")
 
-def get_known_opponents(num_players):
-    known_opponents = []
-    while True:
-        has_known = input("\nDo any opponents have known cards? (y/n): ").lower().strip()
-        if has_known == 'y':
-            while True:
-                try:
-                    num_known = int(input("How many opponents have known cards? "))
-                    if num_known < 1 or num_known >= num_players:
-                        print(f"Please enter a number between 1 and {num_players - 1}.")
-                        continue
-                    break
-                except ValueError:
-                    print("Please enter a valid number.")
-            for i in range(num_known):
-                print(f"\nEnter the 2 hole cards for opponent {i + 1}:")
-                opp_card1 = get_card_input("Card 1: ")
-                opp_card2 = get_card_input("Card 2: ")
-                known_opponents.append([opp_card1, opp_card2])
-            return known_opponents
-        elif has_known == 'n':
-            return known_opponents
-        else:
-            print("Please enter 'y' or 'n'.")
-
 def main():
     while True:
         print("\n===========================================")
@@ -265,7 +250,7 @@ def main():
         card1 = get_card_input("Card 1: ")
         card2 = get_card_input("Card 2: ")
         player_hand = [card1, card2]
-        known_opponents = get_known_opponents(num_players)
+        known_opponents = []
 
         print("\nMode:")
         print("1 = Single calculation, 2 = Full game mode (pre-flop to river)")
@@ -276,7 +261,7 @@ def main():
             print("Invalid mode. Please enter 1 or 2.")
 
         if mode == '2':
-            continuous_game(num_players, player_hand, known_opponents=known_opponents)
+            continuous_game(num_players, player_hand, known_opponents = [])
         else:
             print("\nHow many cards are on the board?")
             print("0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River")
