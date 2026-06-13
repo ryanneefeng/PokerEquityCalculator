@@ -50,7 +50,7 @@ def get_player_action(reccomendation):
                 print(f"You chose to {action} instead of the recommended action: {reccomendation}. I hope luck is on your side!")
         return action
 
-def handle_folds(num_players, known_opponents, dead_cards):
+def handle_folds(num_players, known_opponents, dead_cards, used_cards):
     while True:
         folded = input("Did anyone fold this round? (y/n): ").lower().strip()
         if folded in ["y", "n"]:
@@ -94,16 +94,18 @@ def handle_folds(num_players, known_opponents, dead_cards):
 
         for i in range(num_showed):
             print(f"\nEnter the 2 cards for the player who showed hand {i + 1}:")
-            card1 = get_card_input("Card 1: ")
-            card2 = get_card_input("Card 2: ")
+            card1 = get_card_input("Card 1: ", used_cards)
+            card2 = get_card_input("Card 2: ", used_cards)
             dead_cards.append(card1)
             dead_cards.append(card2)
 
     return num_players, known_opponents, dead_cards
 
-def continuous_game(num_players, player_hand, known_opponents=None):
+def continuous_game(num_players, player_hand, known_opponents=None, used_cards=None):
     if known_opponents is None:
         known_opponents = []
+    if used_cards is None:
+        used_cards = set()
     dead_cards = []
 
     prev_pot = None
@@ -118,7 +120,7 @@ def continuous_game(num_players, player_hand, known_opponents=None):
     if player_action == "fold":
         return
 
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards)
+    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
         return
@@ -131,7 +133,7 @@ def continuous_game(num_players, player_hand, known_opponents=None):
     print("\nEnter the 3 Flop cards:")
     flop = []
     for i in range(3):
-        card = get_card_input(f"Flop card {i + 1}: ")
+        card = get_card_input(f"Flop card {i + 1}: ", used_cards)
         flop.append(card)
     board = flop
 
@@ -155,14 +157,14 @@ def continuous_game(num_players, player_hand, known_opponents=None):
         if player_action == "fold":
             return
 
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards)
+    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
         return
 
     # Turn
     input("Press Enter to continue to the Turn...")
-    turn = get_card_input("Turn card: ")
+    turn = get_card_input("Turn card: ", used_cards)
     board = board + [turn]
 
     print("\n-- TURN --")
@@ -185,14 +187,14 @@ def continuous_game(num_players, player_hand, known_opponents=None):
         if player_action == "fold":
             return
 
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards)
+    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
         return
 
     # River
     input("Press Enter to continue to the River...")
-    river = get_card_input("River card: ")
+    river = get_card_input("River card: ", used_cards)
     board = board + [river]
 
     print("\n-- RIVER --")
@@ -223,10 +225,16 @@ def parse_card(card_str):
         raise ValueError(f"Invalid suit: {suit}. Must be one of {SUITS}")
     return Card(rank, suit)
 
-def get_card_input(prompt):
+def get_card_input(prompt, used_cards=None):
     while True:
         try:
-            return parse_card(input(prompt))
+            card = parse_card(input(prompt))
+            if used_cards is not None and card in used_cards:
+                print(f"{card} is already in play. Please enter a different card.")
+                continue
+            if used_cards is not None:
+                used_cards.add(card)
+            return card
         except ValueError as e:
             print(f"Error: {e}. Please try again.")
 
@@ -247,10 +255,10 @@ def main():
                 print("Please enter a valid number.")
 
         print("\nEnter your 2 hole cards (e.g. A Hearts, 10 Spades):")
-        card1 = get_card_input("Card 1: ")
-        card2 = get_card_input("Card 2: ")
+        used_cards = set()
+        card1 = get_card_input("Card 1: ", used_cards)
+        card2 = get_card_input("Card 2: ", used_cards)
         player_hand = [card1, card2]
-        known_opponents = []
 
         print("\nMode:")
         print("1 = Single calculation, 2 = Full game mode (pre-flop to river)")
@@ -261,7 +269,7 @@ def main():
             print("Invalid mode. Please enter 1 or 2.")
 
         if mode == '2':
-            continuous_game(num_players, player_hand, known_opponents = [])
+            continuous_game(num_players, player_hand, used_cards=used_cards)
         else:
             print("\nHow many cards are on the board?")
             print("0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River")
@@ -277,7 +285,7 @@ def main():
 
             board = []
             for i in range(num_board_cards):
-                card = get_card_input(f"Board card {i + 1}: ")
+                card = get_card_input(f"Board card {i + 1}: ", used_cards)
                 board.append(card)
 
             # Revealed cards
@@ -304,8 +312,8 @@ def main():
 
                     for i in range(num_revealed):
                         print(f"\nEnter the 2 cards for player {i + 1} who revealed:")
-                        card1 = get_card_input("Card 1: ")
-                        card2 = get_card_input("Card 2: ")
+                        card1 = get_card_input("Card 1: ", used_cards)
+                        card2 = get_card_input("Card 2: ", used_cards)
                         dead_cards.append(card1)
                         dead_cards.append(card2)
                     break

@@ -53,3 +53,18 @@ def test_known_opponents_affects_equity():
     equity_unknown, _ = calculate_equity(player_hand, board, 2, simulations=500)
     # Equity should still be high but slightly different with known opponent
     assert 0.0 <= equity_known <= 1.0
+
+def test_equity_with_dead_cards_removes_from_deck():
+    # If all four aces are dead, pocket kings should have very high equity
+    player_hand = make_cards([("K", "Hearts"), ("K", "Diamonds")])
+    dead_cards = make_cards([("A", "Hearts"), ("A", "Diamonds"), ("A", "Clubs"), ("A", "Spades")])
+    board = []
+    equity, _ = calculate_equity(player_hand, board, 2, dead_cards=dead_cards, simulations=500)
+    assert equity > 0.70
+
+def test_more_players_lowers_equity():
+    player_hand = make_cards([("A", "Hearts"), ("K", "Diamonds")])
+    board = []
+    equity_2, _ = calculate_equity(player_hand, board, 2, simulations=500)
+    equity_6, _ = calculate_equity(player_hand, board, 6, simulations=500)
+    assert equity_2 > equity_6

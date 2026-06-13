@@ -56,3 +56,7 @@ def test_best_hand_picks_correct_five():
         ("K", "Hearts"), ("2", "Diamonds"), ("3", "Clubs")
     ])
     assert best_hand(all_cards)[0] == 8
+
+def test_ace_low_straight():
+    cards = make_cards([("A", "Hearts"), ("2", "Diamonds"), ("3", "Clubs"), ("4", "Spades"), ("5", "Hearts")])
+    assert evaluate_hand(cards)[0] == 5
