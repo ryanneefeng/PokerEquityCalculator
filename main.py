@@ -280,21 +280,55 @@ def main():
                 card = get_card_input(f"Board card {i + 1}: ")
                 board.append(card)
 
+            # Revealed cards
+            dead_cards = []
+            known_opponents = []
+            won_by_fold = False
             while True:
-                try:
-                    pot_size = float(input("\nCurrent pot size: $"))
-                    bet_to_call = float(input("Bet to call ($0 if none): $"))
-                    stack_size = float(input("Your remaining stack size: $"))
-                    break
-                except ValueError:
-                    print("Please enter a valid number.")
+                has_revealed = input("\nHave any players revealed their cards (folded and shown)? (y/n): ").lower().strip()
+                if has_revealed == "y":
+                    while True:
+                        try:
+                            num_revealed = int(input("How many players revealed their cards? "))
+                            if num_revealed < 1 or num_revealed >= num_players:
+                                print(f"Please enter a number between 1 and {num_players - 1}.")
+                                continue
+                            break
+                        except ValueError:
+                            print("Please enter a valid number.")
 
-            print("\nRunning simulation...")
-            equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents)
-            display_results(equity, tie_rate, pot_size, bet_to_call, stack_size)
+                    if num_revealed >= num_players - 1:
+                        print("All opponents have folded. You win the pot!")
+                        won_by_fold = True
+                        break
+
+                    for i in range(num_revealed):
+                        print(f"\nEnter the 2 cards for player {i + 1} who revealed:")
+                        card1 = get_card_input("Card 1: ")
+                        card2 = get_card_input("Card 2: ")
+                        dead_cards.append(card1)
+                        dead_cards.append(card2)
+                    break
+                elif has_revealed == "n":
+                    break
+                else:
+                    print("Please enter y or n.")
+            if not won_by_fold:
+                while True:
+                    try:
+                        pot_size = float(input("\nCurrent pot size: $"))
+                        bet_to_call = float(input("Bet to call ($0 if none): $"))
+                        stack_size = float(input("Your remaining stack size: $"))
+                        break
+                    except ValueError:
+                        print("Please enter a valid number.")
+
+                print("\nRunning simulation...")
+                equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
+                display_results(equity, tie_rate, pot_size, bet_to_call, stack_size)
 
         #play again
-        again = input("Play another hand? (y/n): ").lower().strip()
+        again = input("\nPlay another hand? (y/n): ").lower().strip()
         if again != 'y':
             print("\nThanks for playing!")
             break
