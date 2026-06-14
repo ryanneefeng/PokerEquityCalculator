@@ -57,8 +57,8 @@ No external libraries required.
 How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: 3 spades
-Card 2: 10 clubs
+Card 1: A hearts
+Card 2: 10 spades
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -67,30 +67,24 @@ Select mode (1 or 2): 1
 How many cards are on the board?
 0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
 Number of board cards: 3
-Board card 1: J spades
-Board card 2: K clubs
-Board card 3: 3 spades
-3 of Spades is already in play. Please enter a different card.
-Board card 3: 3 clubs
+Board card 1: K spades
+Board card 2: J clubs
+Board card 3: 6 clubs
 
-Have any players revealed their cards (folded and shown)? (y/n): y
-How many players revealed their cards? 1
+Have any players revealed their cards (folded and shown)? (y/n): n
 
-Enter the 2 cards for player 1 who revealed:
-Card 1: 2 clubs
-Card 2: 9 spades
-
-Current pot size: $100
-Bet to call ($0 if none): $20
-Your remaining stack size: $200
+Current pot size: $500
+Bet to call ($0 if none): $200
+Your remaining stack size: $1250
 
 Running simulation...
 
 ===========================================
-  Equity:     27.6%
-  Tie Rate:   3.9%
+  Hand:       High Card with Gutshot Straight Draw
+  Equity:     29.0%
+  Tie Rate:   2.6%
   Action:     Call or Fold
-  Reason:     Equity 27.6% close to pot odds 16.7%. Call $20.0 or fold
+  Reason:     Equity 29.0% close to pot odds 28.6%. Call $200.0 or fold
 ===========================================
 
 Play another hand? (y/n): n
@@ -106,8 +100,8 @@ Thanks for playing!
 How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: A spades
-Card 2: 2 clubs
+Card 1: 10 clubs
+Card 2: 10 spades
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -115,15 +109,16 @@ Select mode (1 or 2): 2
 
 -- PRE-FLOP --
 
-Current pot size: $60 
+Current pot size: $60
 Bet to call ($0 if none): $20
 Your remaining stack size: $100
 
 ===========================================
-  Equity:     31.8%
-  Tie Rate:   4.3%
+  Hand:       Pocket 10s
+  Equity:     37.5%
+  Tie Rate:   0.8%
   Action:     Call
-  Reason:     Equity 31.8% beats pot odds 25.0%. Call $20.0
+  Reason:     Equity 37.5% beats pot odds 25.0%. Call $20.0
 ===========================================
 
 What did you do? (fold, call, raise, check): call
@@ -131,64 +126,58 @@ Did anyone fold this round? (y/n): n
 Press Enter to continue to the Flop...
 
 Enter the 3 Flop cards:
-Flop card 1: 4 clubs
-Flop card 2: 10 spades
-Flop card 3: J spades
+Flop card 1: J clubs
+Flop card 2: 8 diamonds
+Flop card 3: 10 diamonds
 
 -- FLOP --
 
-Current pot size: $80
+Current pot size: $200
 Bet to call ($0 if none): $40
 Your remaining stack size: $80
 
 ===========================================
-  Equity:     21.2%
-  Tie Rate:   3.4%
-  Action:     Fold
-  Reason:     Equity 21.2% well below pot odds 33.3%
-===========================================
-
-What did you do? (fold, call, raise, check): call
-Risky call. I hope luck is on your side!
-Did anyone fold this round? (y/n): y
-How many players folded? 1
-Did any of them show their hand? (y/n): y
-
-Enter the 2 cards for the player who showed hand 1:
-Card 1: 3 spades
-Card 2: K clubs 
-Press Enter to continue to the Turn...
-Turn card: A clubs
-
--- TURN --
-
-Current pot size: $160
-Bet to call ($0 if none): $20
-Your remaining stack size: $40
-
-===========================================
-  Equity:     62.6%
-  Tie Rate:   6.3%
+  Hand:       Three of a Kind
+  Equity:     67.5%
+  Tie Rate:   1.4%
   Action:     Raise
-  Reason:     Equity 62.6% far exceeds pot odds 11.1%. Raise to $40.0 total
+  Reason:     Equity 67.5% is strong regardless of pot odds. Raise to All-In total
 ===========================================
 
 What did you do? (fold, call, raise, check): raise
 Did anyone fold this round? (y/n): n
+Press Enter to continue to the Turn...
+Turn card: Q hearts  
+
+-- TURN --
+
+Current pot size: $400
+Bet to call ($0 if none): $0
+Your remaining stack size: $0
+
+===========================================
+  Hand:       Three of a Kind with Gutshot Straight Draw
+  Equity:     50.9% (you are all-in)
+===========================================
+
+Did anyone fold this round? (y/n): n
 Press Enter to continue to the River...
-River card: 10 clubs
+River card: K hearts
 
 -- RIVER --
 
-Current pot size: $280
-Bet to call ($0 if none): $0
-Your remaining stack size: $0
-Equity: 58.5% (you are all-in, no action needed)
+Current pot size: $600
+
+===========================================
+  Hand:       Three of a Kind
+  Equity:     27.2% (you are all-in)
+===========================================
+
 Hand complete!
 
 Play another hand? (y/n): n
 
-Thanks for playing!
+Thanks for Playing!
 ```
 ## Project Structure
 ```
