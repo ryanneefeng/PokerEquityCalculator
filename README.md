@@ -29,6 +29,7 @@ the optimal move based on pot odds, stack size, and equity.
 - **Input Sanity Checks** - warns the user if pot decreases or stack increases between streets
 - **Duplicate Card Prevention** - rejects any card already entered in the current hand
 - **Input Validation** - handles all invalid input gracefully without crashing
+- **Hand strength descriptor** - tell the user what hand or draw they currently have (flush draw, gutshot straight draw, top pair, two pair, trips, etc.)
 
 ## How It Works
 
