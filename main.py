@@ -1,9 +1,18 @@
 from src.deck import Card, RANKS, SUITS
-from src.equity import calculate_equity
+from src.equity import calculate_equity, project_next_street
 from src.decision import get_recommendation
 from src.evaluator import describe_hand
 
-def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None):
+def display_projections(projections, base_equity):
+    if not projections:
+        return
+    print("  Key cards next street:")
+    for card, equity in projections:
+        change = equity - base_equity
+        direction = "+" if change >= 0 else ""
+        print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f}%)")
+
+def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None):
     action, explanation = get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size)
     print("\n===========================================")
     if hole_cards is not None and board is not None:
@@ -11,6 +20,8 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
         print(f"  Hand:       {hand_desc}")
     print(f"  Equity:     {equity * 100:.1f}%")
     print(f"  Tie Rate:   {tie_rate * 100:.1f}%")
+    if projections and base_equity is not None:
+        display_projections(projections, base_equity)
     print(f"  Action:     {action}")
     print(f"  Reason:     {explanation}")
     print("===========================================\n")
@@ -167,7 +178,8 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================\n")
     else:
-        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
+        projections, base_equity = project_next_street(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
+        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
         player_action = get_player_action(action)
         if player_action == "fold":
             return
@@ -205,7 +217,8 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================\n")
     else:
-        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
+        projections, base_equity = project_next_street(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
+        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
         player_action = get_player_action(action)
         if player_action == "fold":
             return
@@ -365,7 +378,7 @@ def main():
                 display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
 
         #play again
-        again = input("\nPlay another hand? (y/n): ").lower().strip()
+        again = input("Play another hand? (y/n): ").lower().strip()
         if again != 'y':
             print("\nThanks for playing!")
             break

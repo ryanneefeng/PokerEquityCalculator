@@ -58,7 +58,7 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         return "Raise Small or Call", f"Equity {equity*100:.1f}% beats pot odds {pot_odds*100:.1f}%. Raise to {label} total or just call ${bet_to_call}"
     elif equity >= 0.30 and effective_equity >= pot_odds:
         return "Call", f"Equity {equity*100:.1f}% beats pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}"
-    elif equity >= 0.20 and effective_equity >= pot_odds - 0.05:
+    elif equity >= 0.20 and effective_equity >= pot_odds - 0.12:
         return "Call or Fold", f"Equity {equity*100:.1f}% close to pot odds {pot_odds*100:.1f}%. Call ${bet_to_call} or fold"
     else:
         return "Fold", f"Equity {equity*100:.1f}% well below pot odds {pot_odds*100:.1f}%"
