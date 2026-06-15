@@ -132,9 +132,9 @@ def calculate_equity(player_hand, board, num_players, known_opponents=None, dead
     if dead_cards is None:
         dead_cards = []
 
-    if len(board) == 5:
+    if len(board) == 5 and num_players == 2:
         return exact_equity_river(player_hand, board, num_players, known_opponents, dead_cards)
-    elif len(board) == 4:
+    elif len(board) == 4 and num_players == 2:
         return exact_equity_turn(player_hand, board, num_players, known_opponents, dead_cards)
 
     wins = 0
