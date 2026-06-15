@@ -13,6 +13,16 @@ HAND_RANKINGS = {
     "Straight Flush": 9
 }
 
+def best_hand_cards(all_cards):
+    best = None
+    best_combo = None
+    for combo in combinations(all_cards, 5):
+        result = evaluate_hand(list(combo))
+        if best is None or result > best:
+            best = result
+            best_combo = list(combo)
+    return best_combo
+
 def evaluate_hand(cards):
     ranks = [card.rank for card in cards]
     suits = [card.suit for card in cards]

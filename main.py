@@ -1,7 +1,7 @@
 from src.deck import Card, RANKS, SUITS
 from src.equity import calculate_equity, project_next_street
 from src.decision import get_recommendation
-from src.evaluator import describe_hand
+from src.evaluator import describe_hand, best_hand_cards
 
 def display_projections(projections, base_equity):
     if not projections:
@@ -18,6 +18,10 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
     if hole_cards is not None and board is not None:
         hand_desc = describe_hand(hole_cards, board)
         print(f"  Hand:       {hand_desc}")
+        if len(board) >= 3:
+            best_cards = best_hand_cards(hole_cards + board)
+            best_str = ", ".join(str(c) for c in best_cards)
+            print(f"  Best 5:     {best_str}")
     print(f"  Equity:     {equity * 100:.1f}%")
     print(f"  Tie Rate:   {tie_rate * 100:.1f}%")
     if projections and base_equity is not None:
@@ -34,7 +38,7 @@ def get_pot_info(all_in=False):
             if all_in:
                 return pot_size, 0, 0
             bet_to_call = float(input("Bet to call ($0 if none): $"))
-            stack_size = float(input("Your remaining stack size: $"))
+            stack_size = float(input("Your remaining stack size ($0 if all-in): $"))
             return pot_size, bet_to_call, stack_size
         except ValueError:
             print("Please enter a valid number.")
@@ -173,8 +177,11 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     if is_all_in:
         hand_desc = describe_hand(player_hand, board)
+        best_cards = best_hand_cards(player_hand + board)
+        best_str = ", ".join(str(c) for c in best_cards)
         print("\n===========================================")
         print(f"  Hand:       {hand_desc}")
+        print(f"  Best 5:     {best_str}")
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================\n")
     else:
@@ -191,7 +198,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     # Turn
     input("Press Enter to continue to the Turn...")
-    turn = get_card_input("Turn card: ", used_cards)
+    turn = get_card_input("\nTurn card: ", used_cards)
     board = board + [turn]
 
     print("\n-- TURN --")
@@ -212,8 +219,12 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     if is_all_in:
         hand_desc = describe_hand(player_hand, board)
+        hand_desc = describe_hand(player_hand, board)
+        best_cards = best_hand_cards(player_hand + board)
+        best_str = ", ".join(str(c) for c in best_cards)
         print("\n===========================================")
         print(f"  Hand:       {hand_desc}")
+        print(f"  Best 5:     {best_str}")
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================\n")
     else:
@@ -230,7 +241,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     # River
     input("Press Enter to continue to the River...")
-    river = get_card_input("River card: ", used_cards)
+    river = get_card_input("\nRiver card: ", used_cards)
     board = board + [river]
 
     print("\n-- RIVER --")
@@ -241,13 +252,18 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
             print(f"Warning: pot size decreased from ${prev_pot} to ${pot_size}. Please ensure you entered the correct pot size.")
         if stack_size > prev_stack:
             print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
+        if stack_size == 0:
+            is_all_in = True
 
     equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
 
     if is_all_in:
         hand_desc = describe_hand(player_hand, board)
+        best_cards = best_hand_cards(player_hand + board)
+        best_str = ", ".join(str(c) for c in best_cards)
         print("\n===========================================")
         print(f"  Hand:       {hand_desc}")
+        print(f"  Best 5:     {best_str}")
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================\n")
     else:
