@@ -202,8 +202,6 @@ PokerEquityCalculator/
 ## Planned Enhancements
 
 **Phase 2**
-- Hand strength descriptor - identify and display the player's current hand or draw such as flush draw, gutshot straight draw, or top pair
-- Exact enumeration on turn and river - switch from Monte Carlo to exact enumeration when few cards remain for a perfect result
 - Multi-street projection - show how equity changes if a specific card hits on the next street
 
 **Phase 3**
