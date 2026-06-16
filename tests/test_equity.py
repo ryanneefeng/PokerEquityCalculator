@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.deck import Card
-from src.equity import calculate_equity
+from src.equity import calculate_equity, project_next_street
 
 def make_cards(card_list):
     return [Card(rank, suit) for rank, suit in card_list]
@@ -68,3 +68,34 @@ def test_more_players_lowers_equity():
     equity_2, _ = calculate_equity(player_hand, board, 2, simulations=500)
     equity_6, _ = calculate_equity(player_hand, board, 6, simulations=500)
     assert equity_2 > equity_6
+
+def test_exact_equity_river_valid_range():
+    player_hand = make_cards([("A", "Hearts"), ("A", "Diamonds")])
+    board = make_cards([("A", "Clubs"), ("K", "Hearts"), ("2", "Spades"), ("3", "Diamonds"), ("4", "Clubs")])
+    equity, tie_rate = calculate_equity(player_hand, board, 2)
+    assert 0.0 <= equity <= 1.0
+    assert 0.0 <= tie_rate <= 1.0
+    assert equity > 0.90
+
+def test_exact_equity_river_valid_range():
+    player_hand = make_cards([("A", "Hearts"), ("A", "Diamonds")])
+    board = make_cards([("A", "Clubs"), ("K", "Hearts"), ("2", "Spades"), ("3", "Diamonds"), ("4", "Clubs")])
+    equity, tie_rate = calculate_equity(player_hand, board, 2)
+    assert 0.0 <= equity <= 1.0
+    assert 0.0 <= tie_rate <= 1.0
+    assert equity > 0.75
+
+def test_project_next_street_returns_results():
+    player_hand = make_cards([("A", "Hearts"), ("K", "Hearts")])
+    board = make_cards([("2", "Hearts"), ("7", "Hearts"), ("9", "Clubs")])
+    projections, base_equity = project_next_street(player_hand, board, 2, simulations=200)
+    assert 0.0 <= base_equity <= 1.0
+    assert len(projections) <= 5
+    for card, equity in projections:
+        assert 0.0 <= equity <= 1.0
+
+def test_project_next_street_empty_on_river():
+    player_hand = make_cards([("A", "Hearts"), ("K", "Hearts")])
+    board = make_cards([("2", "Hearts"), ("7", "Hearts"), ("9", "Clubs"), ("3", "Diamonds"), ("4", "Spades")])
+    result = project_next_street(player_hand, board, 2, simulations=200)
+    assert result == []
