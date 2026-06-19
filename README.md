@@ -47,11 +47,11 @@ No external libraries required.
       Poker Hand Equity Calculator
 ===========================================
 
-How many players at the table (including you)? 2
+How many players at the table (including you)? 3
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: A spades
-Card 2: 3 hearts
+Card 1: 8 spades
+Card 2: J spades
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -60,25 +60,25 @@ Select mode (1 or 2): 1
 How many cards are on the board?
 0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
 Number of board cards: 3
-Board card 1: K hearts
+Board card 1: A spades
 Board card 2: 10 clubs
-Board card 3: 9 clubs
+Board card 3: 2 spades
 
 Have any players revealed their cards (folded and shown)? (y/n): n
 
-Current pot size: $500  
-Bet to call ($0 if none): $500
-Your remaining stack size: $10000
+Current pot size: $600
+Bet to call ($0 if none): $200
+Your remaining stack size: $1200
 
 Running simulation...
 
 ===========================================
-  Hand:       High Card
-  Best 5:     A of Spades, 3 of Hearts, K of Hearts, 10 of Clubs, 9 of Clubs
-  Equity:     42.3%
-  Tie Rate:   5.0%
-  Action:     Call or Fold
-  Reason:     Equity 42.3% close to pot odds 50.0%. Call $500.0 or fold
+  Hand:       High Card with Flush Draw
+  Best 5:     8 of Spades, J of Spades, A of Spades, 10 of Clubs, 2 of Spades
+  Equity:     46.7%
+  Tie Rate:   2.1%
+  Action:     Raise Small or Call
+  Reason:     Equity 46.7% beats pot odds 25.0%. Raise to $400.0 total or just call $200.0
 ===========================================
 
 Play another hand? (y/n): n
