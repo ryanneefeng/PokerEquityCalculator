@@ -136,7 +136,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     print("\n-- PRE-FLOP --")
     pot_size, bet_to_call, stack_size = get_pot_info()
     equity, tie_rate = calculate_equity(player_hand, [], num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-    action = action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, [])
+    action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, [])
 
     player_action = get_player_action(action)
     if player_action == "fold":

@@ -94,8 +94,8 @@ Thanks for playing!
 How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: J hearts
-Card 2: K clubs
+Card 1: J diamonds
+Card 2: 9 spades
 
 Mode:
 1 = Single calculation, 2 = Full game mode (pre-flop to river)
@@ -103,16 +103,16 @@ Select mode (1 or 2): 2
 
 -- PRE-FLOP --
 
-Current pot size: $60
-Bet to call ($0 if none): $20
-Your remaining stack size ($0 if all-in): $200
+Current pot size: $750
+Bet to call ($0 if none): $250
+Your remaining stack size ($0 if all-in): $2400
 
 ===========================================
-  Hand:       J-K Offsuit
-  Equity:     31.7%
-  Tie Rate:   2.7%
-  Action:     Call
-  Reason:     Equity 31.7% beats pot odds 25.0%. Call $20.0
+  Hand:       J-9 Offsuit
+  Equity:     24.7%
+  Tie Rate:   3.0%
+  Action:     Call or Fold
+  Reason:     Equity 24.7% close to pot odds 25.0%. Call $250.0 or fold
 ===========================================
 
 What did you do? (fold, call, raise, check): call
@@ -120,84 +120,88 @@ Did anyone fold this round? (y/n): n
 Press Enter to continue to the Flop...
 
 Enter the 3 Flop cards:
-Flop card 1: A clubs
-Flop card 2: 10 diamonds
-Flop card 3: 10 clubs
+Flop card 1: 10 clubs
+Flop card 2: 10 spades
+Flop card 3: K clubs
 
 -- FLOP --
 
-Current pot size: $80
-Bet to call ($0 if none): $100
-Your remaining stack size ($0 if all-in): $180
+Current pot size: $1750
+Bet to call ($0 if none): $250
+Your remaining stack size ($0 if all-in): $2150
 
 ===========================================
-  Hand:       Pair with Backdoor Flush Draw and Gutshot Straight Draw
-  Best 5:     J of Hearts, K of Clubs, A of Clubs, 10 of Diamonds, 10 of Clubs
-  Equity:     30.3%
-  Tie Rate:   7.8%
+  Hand:       Pair with Gutshot Straight Draw
+  Best 5:     J of Diamonds, 9 of Spades, 10 of Clubs, 10 of Spades, K of Clubs
+  Equity:     17.8%
+  Tie Rate:   5.4%
   Key cards next street:
-    10 of Hearts -> 17.2% (-11.0%)
-    7 of Hearts -> 18.2% (-10.0%)
-    4 of Hearts -> 18.8% (-9.4%)
-    9 of Hearts -> 19.6% (-8.6%)
-    3 of Hearts -> 19.8% (-8.4%)
+    10 of Hearts -> 7.8% (-10.8%)
+    9 of Hearts -> 28.4% (+9.8%)
+    6 of Hearts -> 11.0% (-7.6%)
+    3 of Hearts -> 12.0% (-6.6%)
+    4 of Hearts -> 12.0% (-6.6%)
   Action:     Fold
-  Reason:     Equity 30.3% well below pot odds 55.6%
+  Reason:     Equity 17.8% well below pot odds 12.5%
 ===========================================
 
 What did you do? (fold, call, raise, check): call
 Risky call. I hope luck is on your side!
 Did anyone fold this round? (y/n): y
-How many players folded? 2
+How many players folded? 1
 Did any of them show their hand? (y/n): y
-How many showed their hand? 1
 
 Enter the 2 cards for the player who showed hand 1:
-Card 1: 5 hearts
-Card 2: 7 diamonds
+Card 1: 3 diamonds
+Card 2: 9 diamonds
 Press Enter to continue to the Turn...
 
-Turn card: Q spades
+Turn card: 5 clubs
 
 -- TURN --
 
-Current pot size: $280
-Bet to call ($0 if none): $80
-Your remaining stack size ($0 if all-in): $80
+Current pot size: $3000
+Bet to call ($0 if none): $500
+Your remaining stack size ($0 if all-in): $1900
 
 ===========================================
-  Hand:       Straight with Backdoor Flush Draw and Open Ended Straight Draw
-  Best 5:     J of Hearts, K of Clubs, A of Clubs, 10 of Diamonds, Q of Spades
-  Equity:     89.9%
-  Tie Rate:   2.7%
+  Hand:       Pair with Backdoor Flush Draw and Gutshot Straight Draw
+  Best 5:     J of Diamonds, 9 of Spades, 10 of Clubs, 10 of Spades, K of Clubs
+  Equity:     13.5%
+  Tie Rate:   3.4%
   Key cards next street:
-    10 of Hearts -> 63.5% (-26.4%)
-    5 of Diamonds -> 96.3% (+6.5%)
-    7 of Hearts -> 96.3% (+6.5%)
-    J of Diamonds -> 83.7% (-6.1%)
-    2 of Hearts -> 95.9% (+6.1%)
-  Action:     Call (All-In)
-  Reason:     Equity 89.9% with tie rate 2.7%. Call all-in of $80.0
+    9 of Hearts -> 42.2% (+25.4%)
+    J of Hearts -> 35.4% (+18.6%)
+    5 of Hearts -> 0.0% (-16.8%)
+    2 of Hearts -> 4.8% (-12.0%)
+    7 of Hearts -> 5.0% (-11.8%)
+  Action:     Fold
+  Reason:     Equity 13.5% well below pot odds 14.3%
 ===========================================
 
 What did you do? (fold, call, raise, check): call
+Risky call. I hope luck is on your side!
 Did anyone fold this round? (y/n): n
 Press Enter to continue to the River...
 
-River card: 3 diamonds
+River card: Q diamonds
 
 -- RIVER --
 
-Current pot size: $450
-Bet to call ($0 if none): $0
-Your remaining stack size ($0 if all-in): $0
+Current pot size: $4500
+Bet to call ($0 if none): $500
+Your remaining stack size ($0 if all-in): $1400
 
 ===========================================
   Hand:       Straight
-  Best 5:     J of Hearts, K of Clubs, A of Clubs, 10 of Diamonds, Q of Spades
-  Equity:     95.9% (you are all-in)
+  Best 5:     J of Diamonds, 9 of Spades, 10 of Clubs, K of Clubs, Q of Diamonds
+  Equity:     81.6%
+  Tie Rate:   0.9%
+  Action:     Raise (All-In consideration)
+  Reason:     Equity 81.6% is dominant. Raise to $1120.0 total
 ===========================================
 
+What did you do? (fold, call, raise, check): raise
 Hand complete!
 Play another hand? (y/n): n
 
