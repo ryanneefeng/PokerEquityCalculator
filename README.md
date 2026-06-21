@@ -232,6 +232,8 @@ PokerEquityCalculator/
 ├── main.py            # Entry point and user input handling
 ├── README.md
 ├── LICENSE
+├── .gitignore
+├── session.json
 └── requirements.txt
 ```
 
