@@ -126,13 +126,12 @@ def exact_equity_turn(player_hand, board, num_players, known_opponents, dead_car
         return 0.0, 0.0
     return wins / total, ties / total
 
-def project_next_street(player_hand, board, num_players, known_opponents=None, dead_cards=None, sample_size=10, simulations=500):
+def project_next_street(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=300):
     if known_opponents is None:
         known_opponents = []
     if dead_cards is None:
         dead_cards = []
 
-    # Only relevant on flop or turn
     if len(board) not in [3, 4]:
         return []
 
@@ -144,29 +143,18 @@ def project_next_street(player_hand, board, num_players, known_opponents=None, d
     deck.remove(known_cards)
     remaining = deck.cards
 
-    # Sample cards to project -- pick one of each rank/suit combo that exists
-    # Group by rank to avoid showing 4 of the same rank
-    seen_ranks = set()
-    sample_cards = []
-    for card in remaining:
-        if card.rank not in seen_ranks:
-            sample_cards.append(card)
-            seen_ranks.add(card.rank)
-        if len(sample_cards) >= sample_size:
-            break
+    # Calculate base equity
+    base_equity, _ = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards, simulations=simulations)
 
-    # Calculate equity for each sample card
+    # Calculate equity for every remaining card
     results = []
-    for card in sample_cards:
+    for card in remaining:
         new_board = board + [card]
-        new_dead = dead_cards + [card]
         equity, _ = calculate_equity(player_hand, new_board, num_players, known_opponents=known_opponents, dead_cards=dead_cards, simulations=simulations)
         results.append((card, equity))
 
-    # Sort by equity change -- biggest jumps first
-    base_equity, _ = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards, simulations=simulations)
+    # Sort by absolute equity change and return top 5
     results.sort(key=lambda x: abs(x[1] - base_equity), reverse=True)
-
     return results[:5], base_equity
 
 def calculate_equity(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=10000):

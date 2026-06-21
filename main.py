@@ -2,6 +2,7 @@ from src.deck import Card, RANKS, SUITS
 from src.equity import calculate_equity, project_next_street
 from src.decision import get_recommendation
 from src.evaluator import describe_hand, best_hand_cards
+from src.session import log_hand
 
 def display_projections(projections, base_equity):
     if not projections:
@@ -73,7 +74,7 @@ def get_player_action(reccomendation):
 
 def handle_folds(num_players, known_opponents, dead_cards, used_cards):
     while True:
-        folded = input("Did anyone fold this round? (y/n): ").lower().strip()
+        folded = input("\nDid anyone fold this round? (y/n): ").lower().strip()
         if folded in ["y", "n"]:
             break
         print("Please enter y or n.")
@@ -92,6 +93,10 @@ def handle_folds(num_players, known_opponents, dead_cards, used_cards):
             print("Please enter a valid number.")
 
     num_players -= num_folded
+
+    # If everyone else folded, no need to ask about shown cards
+    if num_players == 1:
+        return num_players, known_opponents, dead_cards
 
     while True:
         showed = input("Did any of them show their hand? (y/n): ").lower().strip()
@@ -129,6 +134,11 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         used_cards = set()
     dead_cards = []
     is_all_in = False
+    
+    board = []
+    equity = 0.0
+    action = ""
+    player_action = ""
 
     prev_pot = None
     prev_stack = None
@@ -140,11 +150,15 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     player_action = get_player_action(action)
     if player_action == "fold":
+        log_hand(player_hand, board, num_players, equity, action, player_action, False)
+        print("\nHand logged.")
         return
 
     num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
         return
 
     prev_pot = pot_size
@@ -189,13 +203,16 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
         player_action = get_player_action(action)
         if player_action == "fold":
+            log_hand(player_hand, board, num_players, equity, action, player_action, False)
+            print("\nHand logged.")
             return
 
     num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
         return
-
     # Turn
     input("Press Enter to continue to the Turn...")
     turn = get_card_input("\nTurn card: ", used_cards)
@@ -232,11 +249,15 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
         player_action = get_player_action(action)
         if player_action == "fold":
+            log_hand(player_hand, board, num_players, equity, action, player_action, False)
+            print("\nHand logged.")
             return
 
     num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
     if num_players == 1:
         print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
         return
 
     # River
@@ -270,8 +291,16 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
         player_action = get_player_action(action)
 
-    print("Hand complete!")
-    
+    while True:
+        won_input = input("\nDid you win this hand? (y/n): ").lower().strip()
+        if won_input in ["y", "n"]:
+            break
+        print("Please enter y or n.")
+
+    print("\nHand complete!")
+    log_hand(player_hand, board, num_players, equity, action, player_action, won_input == "y")
+    print("Hand logged.")
+
 def parse_card(card_str):
     parts = card_str.title().split()
     if len(parts) != 2:
@@ -394,7 +423,7 @@ def main():
                 display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
 
         #play again
-        again = input("Play another hand? (y/n): ").lower().strip()
+        again = input("\nPlay another hand? (y/n): ").lower().strip()
         if again != 'y':
             print("\nThanks for playing!")
             break
