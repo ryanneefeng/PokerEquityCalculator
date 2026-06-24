@@ -92,28 +92,31 @@ Thanks for playing!
       Poker Hand Equity Calculator
 ===========================================
 
+Mode:
+1 = Single calculation
+2 = Full game mode (pre-flop to river)
+3 = View session stats
+
+Select mode (1, 2, or 3): 2
+
 How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: 10 hearts
-Card 2: Q spades
-
-Mode:
-1 = Single calculation, 2 = Full game mode (pre-flop to river)
-Select mode (1 or 2): 2
+Card 1: Q clubs
+Card 2: 10 spades
 
 -- PRE-FLOP --
 
-Current pot size: $90
-Bet to call ($0 if none): $30
-Your remaining stack size ($0 if all-in): $450
+Current pot size: $150
+Bet to call ($0 if none): $50
+Your remaining stack size ($0 if all-in): $850
 
 ===========================================
-  Hand:       10-Q Offsuit
-  Equity:     28.1%
-  Tie Rate:   3.1%
+  Hand:       Q-10 Offsuit
+  Equity:     29.1%
+  Tie Rate:   2.6%
   Action:     Call or Fold
-  Reason:     Equity 28.1% close to pot odds 25.0%. Call $30.0 or fold
+  Reason:     Equity 29.1% close to pot odds 25.0%. Call $50.0 or fold
 ===========================================
 
 What did you do? (fold, call, raise, check): call
@@ -122,94 +125,118 @@ Did anyone fold this round? (y/n): n
 Press Enter to continue to the Flop...
 
 Enter the 3 Flop cards:
-Flop card 1: A spades
-Flop card 2: 10 clubs
-Flop card 3: J clubs
+Flop card 1: 5 spades
+Flop card 2: J hearts
+Flop card 3: 10 diamonds
 
 -- FLOP --
 
 Current pot size: $200
-Bet to call ($0 if none): $40
-Your remaining stack size ($0 if all-in): $420
+Bet to call ($0 if none): $0
+Your remaining stack size ($0 if all-in): $800
 
 ===========================================
-  Hand:       Pair with Gutshot Straight Draw
-  Best 5:     10 of Hearts, Q of Spades, A of Spades, 10 of Clubs, J of Clubs
-  Equity:     39.0%
-  Tie Rate:   8.6%
+  Hand:       Pair
+  Best 5:     Q of Clubs, 10 of Spades, 5 of Spades, J of Hearts, 10 of Diamonds
+  Equity:     44.7%
+  Tie Rate:   3.2%
   Key cards next street:
-    10 of Spades -> 80.3% (+39.3%)
-    10 of Diamonds -> 76.0% (+35.0%)
-    K of Hearts -> 58.0% (+17.0%)
-    7 of Clubs -> 27.3% (-13.7%)
-    A of Hearts -> 54.0% (+13.0%)
-  Action:     Call
-  Reason:     Equity 39.0% beats pot odds 16.7%. Call $40.0
+    10 of Clubs -> 87.7% (+45.3%)
+    10 of Hearts -> 84.7% (+42.3%)
+    Q of Hearts -> 62.7% (+20.3%)
+    Q of Diamonds -> 58.7% (+16.3%)
+    Q of Spades -> 58.3% (+16.0%)
+  Action:     Raise if confident or Check
+  Reason:     Equity 44.7%
 ===========================================
 
-What did you do? (fold, call, raise, check): call
+What did you do? (fold, call, raise, check): check
 
-Did anyone fold this round? (y/n): y
-How many players folded? 1
-Did any of them show their hand? (y/n): y
-
-Enter the 2 cards for the player who showed hand 1:
-Card 1: 2 diamonds
-Card 2: 7 clubs
+Did anyone fold this round? (y/n): n
 Press Enter to continue to the Turn...
 
-Turn card: 9 clubs
+Turn card: Q hearts
 
 -- TURN --
 
-Current pot size: $300
-Bet to call ($0 if none): $30
-Your remaining stack size ($0 if all-in): $380
-
-===========================================
-  Hand:       Pair with Backdoor Flush Draw and Open Ended Straight Draw
-  Best 5:     10 of Hearts, Q of Spades, A of Spades, 10 of Clubs, J of Clubs
-  Equity:     42.3%
-  Tie Rate:   5.3%
-  Key cards next street:
-    10 of Diamonds -> 81.0% (+35.7%)
-    10 of Spades -> 78.7% (+33.3%)
-    6 of Clubs -> 17.3% (-28.0%)
-    K of Hearts -> 73.0% (+27.7%)
-    9 of Spades -> 18.0% (-27.3%)
-  Action:     Call
-  Reason:     Equity 42.3% beats pot odds 9.1%. Call $30.0
-===========================================
-
-What did you do? (fold, call, raise, check): call
-
-Did anyone fold this round? (y/n): n
-Press Enter to continue to the River...
-
-River card: 10 spades
-
--- RIVER --
-
-Current pot size: $530
+Current pot size: $400
 Bet to call ($0 if none): $100
-Your remaining stack size ($0 if all-in): $350
+Your remaining stack size ($0 if all-in): $800
 
 ===========================================
-  Hand:       Three of a Kind
-  Best 5:     10 of Hearts, Q of Spades, A of Spades, 10 of Clubs, 10 of Spades
-  Equity:     79.8%
-  Tie Rate:   0.6%
-  Action:     Raise (All-In consideration)
-  Reason:     Equity 79.8% is dominant. Raise to $280.0 total
+  Hand:       Two Pair
+  Best 5:     Q of Clubs, 10 of Spades, J of Hearts, 10 of Diamonds, Q of Hearts
+  Equity:     60.9%
+  Tie Rate:   1.4%
+  Key cards next street:
+    K of Hearts -> 16.3% (-47.0%)
+    K of Diamonds -> 19.3% (-44.0%)
+    K of Spades -> 22.7% (-40.7%)
+    9 of Hearts -> 23.0% (-40.3%)
+    K of Clubs -> 23.3% (-40.0%)
+  Action:     Raise
+  Reason:     Equity 60.9% far exceeds pot odds 20.0%. Raise to $240.0 total
 ===========================================
 
 What did you do? (fold, call, raise, check): raise
 
-Did you win this hand? (y/n): n
+Did anyone fold this round? (y/n): y
+How many players folded? 1
+Did any of them show their hand? (y/n): n
+Press Enter to continue to the River...
 
-Hand logged.
+River card: 10 clubs
+
+-- RIVER --
+
+Current pot size: $800
+Bet to call ($0 if none): $150
+Your remaining stack size ($0 if all-in): $700
+
+===========================================
+  Hand:       Full House
+  Best 5:     Q of Clubs, 10 of Spades, 10 of Diamonds, Q of Hearts, 10 of Clubs
+  Equity:     99.5%
+  Tie Rate:   0.3%
+  Action:     Raise (All-In consideration)
+  Reason:     Equity 99.5% is dominant. Raise to $560.0 total
+===========================================
+
+What did you do? (fold, call, raise, check): raise
+
+Did you win this hand? (y/n): y
 
 Hand complete!
+Hand logged.
+
+Play another hand? (y/n): n
+
+Thanks for playing!
+```
+### Session Stats Mode
+```
+===========================================
+      Poker Hand Equity Calculator
+===========================================
+
+Mode:
+1 = Single calculation
+2 = Full game mode (pre-flop to river)
+3 = View session stats
+
+Select mode (1, 2, or 3): 3
+
+===========================================
+           Session Statistics
+===========================================
+  Total hands played:       6
+  Wins:                     3
+  Win rate:                 50.0%
+  Average final equity:     49.5%
+  Followed recommendation:  66.7%
+  Win rate when followed:   50.0%
+  Win rate when deviated:   50.0%
+===========================================
 
 Play another hand? (y/n): n
 
@@ -223,17 +250,18 @@ PokerEquityCalculator/
 │   ├── deck.py        # Card and Deck classes
 │   ├── evaluator.py   # Hand evaluation and best hand logic
 │   ├── equity.py      # Monte Carlo equity simulation
-│   └── decision.py    # Pot odds and recommendation engine
+│   ├── decision.py    # Pot odds and recommendation engine
+│   └── session.py     # Session logging and statistics
 │
 ├── tests/
 │   ├── test_evaluator.py
-│   └── test_equity.py
+│   ├── test_equity.py
+│   └── test_session.py
 │
 ├── main.py            # Entry point and user input handling
 ├── README.md
 ├── LICENSE
 ├── .gitignore
-├── session.json
 └── requirements.txt
 ```
 
@@ -272,6 +300,14 @@ amount. Absolute equity floors are enforced so the program never recommends
 raising on a weak hand regardless of pot odds. All-in is only suggested when
 equity clears 65%.
 
+### src/session.py
+Handles session logging and statistics. `log_hand` appends each completed
+continuous mode hand to a local JSON file including hole cards, board state,
+number of players, final equity, recommendation given, action taken, whether
+the recommendation was followed, and the outcome. `get_stats` reads the session
+file and returns win rate, recommendation follow rate, average equity, and a
+breakdown of win rate when following vs deviating from recommendations.
+
 ### main.py
 Entry point for the program. Handles all user input with validation loops,
 duplicate card prevention, and pot and stack sanity checks between streets.
@@ -294,7 +330,6 @@ tracking, dead card memory, and all-in detection across streets.
 
 **Phase 3**
 - Position awareness - track seat order and adjust available decisions and fold information based on when the player acts in each betting round
-- Session stats viewer - display win rate, recommendation follow rate, and average equity across logged hands
 - SQL storage - migrate session logging from JSON to SQLite for persistent, queryable hand history
 
 ## Requirements
