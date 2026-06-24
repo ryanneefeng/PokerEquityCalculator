@@ -2,7 +2,7 @@ from src.deck import Card, RANKS, SUITS
 from src.equity import calculate_equity, project_next_street
 from src.decision import get_recommendation
 from src.evaluator import describe_hand, best_hand_cards
-from src.session import log_hand
+from src.session import log_hand, get_stats
 
 def display_projections(projections, base_equity):
     if not projections:
@@ -331,9 +331,41 @@ def main():
         print("      Poker Hand Equity Calculator")
         print("===========================================\n")
 
+        print("Mode:")
+        print("1 = Single calculation")
+        print("2 = Full game mode (pre-flop to river)")
+        print("3 = View session stats")
+        while True:
+            mode = input("\nSelect mode (1, 2, or 3): ")
+            if mode in ["1", "2", "3"]:
+                break
+            print("Invalid mode. Please enter 1, 2, or 3.")
+
+        if mode == '3':
+            stats = get_stats()
+            if stats is None:
+                print("\nNo hands logged yet. Play some hands in continuous mode first.")
+            else:
+                print("\n===========================================")
+                print("           Session Statistics")
+                print("===========================================")
+                print(f"  Total hands played:       {stats['total_hands']}")
+                print(f"  Wins:                     {stats['wins']}")
+                print(f"  Win rate:                 {stats['win_rate']}%")
+                print(f"  Average final equity:     {stats['avg_equity']}%")
+                print(f"  Followed recommendation:  {stats['follow_rate']}%")
+                print(f"  Win rate when followed:   {stats['followed_win_rate']}%")
+                print(f"  Win rate when deviated:   {stats['deviated_win_rate']}%")
+                print("===========================================\n")
+            again = input("Play another hand? (y/n): ").lower().strip()
+            if again != 'y':
+                print("\nThanks for playing!")
+                break
+            continue
+
         while True:
             try:
-                num_players = int(input("How many players at the table (including you)? "))
+                num_players = int(input("\nHow many players at the table (including you)? "))
                 if num_players < 2 or num_players > 10:
                     print("Please enter a number between 2 and 10.")
                     continue
@@ -346,14 +378,6 @@ def main():
         card1 = get_card_input("Card 1: ", used_cards)
         card2 = get_card_input("Card 2: ", used_cards)
         player_hand = [card1, card2]
-
-        print("\nMode:")
-        print("1 = Single calculation, 2 = Full game mode (pre-flop to river)")
-        while True:
-            mode = input("Select mode (1 or 2): ")
-            if mode in ["1", "2"]:
-                break
-            print("Invalid mode. Please enter 1 or 2.")
 
         if mode == '2':
             continuous_game(num_players, player_hand, used_cards=used_cards)
@@ -375,7 +399,6 @@ def main():
                 card = get_card_input(f"Board card {i + 1}: ", used_cards)
                 board.append(card)
 
-            # Revealed cards
             dead_cards = []
             known_opponents = []
             won_by_fold = False
@@ -384,7 +407,7 @@ def main():
                 if has_revealed == "y":
                     while True:
                         try:
-                            num_revealed = int(input("How many players revealed their cards? "))
+                            num_revealed = int(input("\nHow many players revealed their cards? "))
                             if num_revealed < 1 or num_revealed >= num_players:
                                 print(f"Please enter a number between 1 and {num_players - 1}.")
                                 continue
@@ -408,6 +431,7 @@ def main():
                     break
                 else:
                     print("Please enter y or n.")
+
             if not won_by_fold:
                 while True:
                     try:
@@ -422,7 +446,6 @@ def main():
                 equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
                 display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
 
-        #play again
         again = input("\nPlay another hand? (y/n): ").lower().strip()
         if again != 'y':
             print("\nThanks for playing!")

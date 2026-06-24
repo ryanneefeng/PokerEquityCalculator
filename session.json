@@ -82,5 +82,19 @@
     "player_action": "raise",
     "followed_recommendation": true,
     "won": false
+  },
+  {
+    "date": "2026-06-23 22:08",
+    "hole_cards": [
+      "A of Hearts",
+      "J of Spades"
+    ],
+    "board": [],
+    "num_players": 4,
+    "final_equity": 36.6,
+    "recommendation": "Call",
+    "player_action": "fold",
+    "followed_recommendation": false,
+    "won": false
   }
 ]

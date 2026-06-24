@@ -29,3 +29,37 @@ def log_hand(hole_cards, board, num_players, final_equity, recommendation, playe
     }
     session.append(hand)
     save_session(session)
+
+def get_stats():
+    session = load_session()
+    if not session:
+        return None
+
+    total_hands = len(session)
+    wins = sum(1 for hand in session if hand["won"])
+    win_rate = wins / total_hands
+
+    followed = sum(1 for hand in session if hand["followed_recommendation"])
+    follow_rate = followed / total_hands
+
+    avg_equity = sum(hand["final_equity"] for hand in session) / total_hands
+
+    # When followed recommendation
+    followed_hands = [hand for hand in session if hand["followed_recommendation"]]
+    followed_wins = sum(1 for hand in followed_hands if hand["won"])
+    followed_win_rate = followed_wins / len(followed_hands) if followed_hands else 0
+
+    # When deviated from recommendation
+    deviated_hands = [hand for hand in session if not hand["followed_recommendation"]]
+    deviated_wins = sum(1 for hand in deviated_hands if hand["won"])
+    deviated_win_rate = deviated_wins / len(deviated_hands) if deviated_hands else 0
+
+    return {
+        "total_hands": total_hands,
+        "wins": wins,
+        "win_rate": round(win_rate * 100, 1),
+        "follow_rate": round(follow_rate * 100, 1),
+        "avg_equity": round(avg_equity, 1),
+        "followed_win_rate": round(followed_win_rate * 100, 1),
+        "deviated_win_rate": round(deviated_win_rate * 100, 1)
+    }
