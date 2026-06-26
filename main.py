@@ -29,7 +29,7 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
         display_projections(projections, base_equity)
     print(f"  Action:     {action}")
     print(f"  Reason:     {explanation}")
-    print("===========================================\n")
+    print("===========================================")
     return action
 
 def get_pot_info(all_in=False):
@@ -47,7 +47,7 @@ def get_pot_info(all_in=False):
 def get_player_action(reccomendation):
     valid_actions = ["fold", "call", "raise", "check"]
     while True:
-        action = input("What did you do? (fold, call, raise, check): ").lower().strip()
+        action = input("\nWhat did you do? (fold, call, raise, check): ").lower().strip()
         if action not in valid_actions:
             print("Invalid action. Please enter fold, call, raise, or check.")
             continue
@@ -127,6 +127,37 @@ def handle_folds(num_players, known_opponents, dead_cards, used_cards):
 
     return num_players, known_opponents, dead_cards
 
+def get_position(num_players):
+    print("\nWhat is your seat position at the table?")
+    print("1 = Small Blind, 2 = Big Blind", end="")
+    if num_players > 2:
+        print(f", 3 to {num_players} = UTG to Dealer", end="")
+    print()
+
+    while True:
+        try:
+            position = int(input(f"Your position (1-{num_players}): "))
+            if position < 1 or position > num_players:
+                print(f"Please enter a number between 1 and {num_players}.")
+                continue
+            break
+        except ValueError:
+            print("Please enter a valid number.")
+
+    if position == 1:
+        label = "Small Blind"
+    elif position == 2:
+        label = "Big Blind"
+    elif position == num_players:
+        label = "Dealer (Button)"
+    elif position == num_players - 1:
+        label = "Cutoff"
+    else:
+        label = f"UTG+{position - 3}" if position > 3 else "UTG"
+
+    print(f"\nYou are playing from: {label}")
+    return position, label
+
 def continuous_game(num_players, player_hand, known_opponents=None, used_cards=None):
     if known_opponents is None:
         known_opponents = []
@@ -140,10 +171,21 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     action = ""
     player_action = ""
 
+    position, position_label = get_position(num_players)
+
     prev_pot = None
     prev_stack = None
 
     print("\n-- PRE-FLOP --")
+    print(f"  Position: {position_label}")
+
+    if position == 1:
+        print("  You are the Small Blind -- you must post the small blind before action begins.")
+    elif position == 2:
+        print("  You are the Big Blind -- you must post the big blind before action begins.")
+    else:
+        print("  You are not a blind -- you can fold, call, or raise freely.")
+
     pot_size, bet_to_call, stack_size = get_pot_info()
     equity, tie_rate = calculate_equity(player_hand, [], num_players, known_opponents=known_opponents, dead_cards=dead_cards)
     action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, [])
