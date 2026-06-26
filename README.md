@@ -15,7 +15,7 @@ interest in probability and quantitative decision making.
 
 ## Features
 
-- **Monte Carlo Simulation** - 10,000 simulations pre-flop and flop, exact enumeration on turn and river in heads up play for perfect accuracy
+- **Monte Carlo Simulation** - 10,000 simulations pre-flop and flop, exact enumeration on turn and river in heads up play for perfect accuracy. Multi-street projections always use Monte Carlo for speed.
 - **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush including ace-low straights with correct tiebreaker logic
 - **Hand Descriptor** - identifies your current hand or draw at each street and shows the exact 5 cards making your best hand
 - **Multi-Street Projection** - shows how equity shifts if specific cards hit next street, highlighting the biggest gainers and losers
@@ -301,12 +301,7 @@ raising on a weak hand regardless of pot odds. All-in is only suggested when
 equity clears 65%.
 
 ### src/session.py
-Handles session logging and statistics. `log_hand` appends each completed
-continuous mode hand to a local JSON file including hole cards, board state,
-number of players, final equity, recommendation given, action taken, whether
-the recommendation was followed, and the outcome. `get_stats` reads the session
-file and returns win rate, recommendation follow rate, average equity, and a
-breakdown of win rate when following vs deviating from recommendations.
+Handles session logging and statistics using SQLite via Python's built-in `sqlite3` module. `log_hand` inserts each completed continuous mode hand into a local `session.db` database. `get_stats` queries the database to return win rate, recommendation follow rate, average equity, and a breakdown of win rate when following vs deviating from recommendations.
 
 ### main.py
 Entry point for the program. Handles all user input with validation loops,
@@ -330,7 +325,6 @@ tracking, dead card memory, and all-in detection across streets.
 
 **Phase 3**
 - Position awareness - track seat order and adjust available decisions and fold information based on when the player acts in each betting round
-- SQL storage - migrate session logging from JSON to SQLite for persistent, queryable hand history
 
 ## Requirements
 
