@@ -1,34 +1,56 @@
 import sys
 import os
-import json
-import tempfile
+import sqlite3
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.deck import Card
-from src.session import log_hand, get_stats, SESSION_FILE
+from src.session import log_hand, get_stats, DB_FILE, initialize_db
 
 def make_cards(card_list):
     return [Card(rank, suit) for rank, suit in card_list]
 
-def setup_test_session(hands):
-    with open(SESSION_FILE, "w", encoding="utf-8") as f:
-        json.dump(hands, f)
-
 def teardown_test_session():
-    if os.path.exists(SESSION_FILE):
-        with open(SESSION_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f)
+    if os.path.exists(DB_FILE):
+        os.remove(DB_FILE)
+
+def setup_test_session(hands):
+    teardown_test_session()
+    initialize_db()
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    for hand in hands:
+        cursor.execute("""
+            INSERT INTO hands (date, hole_cards, board, num_players, final_equity, recommendation, player_action, followed_recommendation, won)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            hand["date"],
+            str(hand["hole_cards"]),
+            str(hand["board"]),
+            hand["num_players"],
+            hand["final_equity"],
+            hand["recommendation"],
+            hand["player_action"],
+            1 if hand["followed_recommendation"] else 0,
+            1 if hand["won"] else 0
+        ))
+    conn.commit()
+    conn.close()
 
 def test_log_hand_adds_entry():
     teardown_test_session()
     player_hand = make_cards([("A", "Hearts"), ("K", "Diamonds")])
     board = make_cards([("2", "Clubs"), ("3", "Spades"), ("4", "Hearts")])
     log_hand(player_hand, board, 2, 0.65, "Raise", "raise", True)
-    with open(SESSION_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    assert len(data) == 1
-    assert data[0]["won"] == True
-    assert data[0]["final_equity"] == 65.0
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM hands")
+    count = cursor.fetchone()[0]
+    cursor.execute("SELECT won, final_equity FROM hands")
+    row = cursor.fetchone()
+    conn.close()
+    assert count == 1
+    assert row[0] == 1
+    assert row[1] == 65.0
     teardown_test_session()
 
 def test_get_stats_win_rate():

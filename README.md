@@ -340,7 +340,7 @@ and itertools.
 ## Author
 
 **Ryan Feng**
-Cornell University | B.A. Mathematics, Minor: Computer Science, Statistics | Class of 2029
+Cornell University | B.A. Mathematics, Minor: Computer Science, Actuarial Studies | Class of 2029
 
 - LinkedIn: [linkedin.com/in/ryanneefeng](https://linkedin.com/in/ryanneefeng)
 - Email: ryanneefeng@gmail.com

@@ -135,7 +135,6 @@ def project_next_street(player_hand, board, num_players, known_opponents=None, d
     if len(board) not in [3, 4]:
         return []
 
-    # Build remaining deck
     deck = Deck()
     known_cards = player_hand + board + dead_cards
     for opp_hand in known_opponents:
@@ -143,31 +142,18 @@ def project_next_street(player_hand, board, num_players, known_opponents=None, d
     deck.remove(known_cards)
     remaining = deck.cards
 
-    # Calculate base equity
-    base_equity, _ = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards, simulations=simulations)
+    base_equity, _ = monte_carlo_equity(player_hand, board, num_players, known_opponents, dead_cards, simulations)
 
-    # Calculate equity for every remaining card
     results = []
     for card in remaining:
         new_board = board + [card]
-        equity, _ = calculate_equity(player_hand, new_board, num_players, known_opponents=known_opponents, dead_cards=dead_cards, simulations=simulations)
+        equity, _ = monte_carlo_equity(player_hand, new_board, num_players, known_opponents, dead_cards, simulations)
         results.append((card, equity))
 
-    # Sort by absolute equity change and return top 5
     results.sort(key=lambda x: abs(x[1] - base_equity), reverse=True)
     return results[:5], base_equity
 
-def calculate_equity(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=10000):
-    if known_opponents is None:
-        known_opponents = []
-    if dead_cards is None:
-        dead_cards = []
-
-    if len(board) == 5 and num_players == 2:
-        return exact_equity_river(player_hand, board, num_players, known_opponents, dead_cards)
-    elif len(board) == 4 and num_players == 2:
-        return exact_equity_turn(player_hand, board, num_players, known_opponents, dead_cards)
-
+def monte_carlo_equity(player_hand, board, num_players, known_opponents, dead_cards, simulations=10000):
     wins = 0
     ties = 0
 
@@ -209,6 +195,17 @@ def calculate_equity(player_hand, board, num_players, known_opponents=None, dead
         elif you_tie:
             ties += 1
 
-    equity = wins / simulations
-    tie_rate = ties / simulations
-    return equity, tie_rate
+    return wins / simulations, ties / simulations
+
+def calculate_equity(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=10000):
+    if known_opponents is None:
+        known_opponents = []
+    if dead_cards is None:
+        dead_cards = []
+
+    if len(board) == 5 and num_players == 2:
+        return exact_equity_river(player_hand, board, num_players, known_opponents, dead_cards)
+    elif len(board) == 4 and num_players == 2:
+        return exact_equity_turn(player_hand, board, num_players, known_opponents, dead_cards)
+
+    return monte_carlo_equity(player_hand, board, num_players, known_opponents, dead_cards, simulations)

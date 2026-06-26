@@ -1,65 +1,91 @@
-import json
-import os
+import sqlite3
 from datetime import datetime
 
-SESSION_FILE = "session.json"
+DB_FILE = "session.db"
 
-def load_session():
-    if not os.path.exists(SESSION_FILE):
-        return []
-    with open(SESSION_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+def get_connection():
+    conn = sqlite3.connect(DB_FILE)
+    return conn
 
-def save_session(data):
-    with open(SESSION_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+def initialize_db():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS hands (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            hole_cards TEXT,
+            board TEXT,
+            num_players INTEGER,
+            final_equity REAL,
+            recommendation TEXT,
+            player_action TEXT,
+            followed_recommendation INTEGER,
+            won INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
 
 def log_hand(hole_cards, board, num_players, final_equity, recommendation, player_action, won):
-    session = load_session()
-    hand = {
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "hole_cards": [str(card) for card in hole_cards],
-        "board": [str(card) for card in board],
-        "num_players": num_players,
-        "final_equity": round(final_equity * 100, 1),
-        "recommendation": recommendation,
-        "player_action": player_action,
-        "followed_recommendation": player_action.lower() in recommendation.lower(),
-        "won": won
-    }
-    session.append(hand)
-    save_session(session)
+    initialize_db()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO hands (date, hole_cards, board, num_players, final_equity, recommendation, player_action, followed_recommendation, won)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        ", ".join(str(c) for c in hole_cards),
+        ", ".join(str(c) for c in board),
+        num_players,
+        round(final_equity * 100, 1),
+        recommendation,
+        player_action,
+        1 if player_action.lower() in recommendation.lower() else 0,
+        1 if won else 0
+    ))
+    conn.commit()
+    conn.close()
 
 def get_stats():
-    session = load_session()
-    if not session:
+    initialize_db()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM hands")
+    total_hands = cursor.fetchone()[0]
+
+    if total_hands == 0:
+        conn.close()
         return None
 
-    total_hands = len(session)
-    wins = sum(1 for hand in session if hand["won"])
-    win_rate = wins / total_hands
+    cursor.execute("SELECT COUNT(*) FROM hands WHERE won = 1")
+    wins = cursor.fetchone()[0]
 
-    followed = sum(1 for hand in session if hand["followed_recommendation"])
-    follow_rate = followed / total_hands
+    cursor.execute("SELECT AVG(final_equity) FROM hands")
+    avg_equity = round(cursor.fetchone()[0], 1)
 
-    avg_equity = sum(hand["final_equity"] for hand in session) / total_hands
+    cursor.execute("SELECT COUNT(*) FROM hands WHERE followed_recommendation = 1")
+    followed = cursor.fetchone()[0]
 
-    # When followed recommendation
-    followed_hands = [hand for hand in session if hand["followed_recommendation"]]
-    followed_wins = sum(1 for hand in followed_hands if hand["won"])
-    followed_win_rate = followed_wins / len(followed_hands) if followed_hands else 0
+    cursor.execute("SELECT COUNT(*) FROM hands WHERE followed_recommendation = 1 AND won = 1")
+    followed_wins = cursor.fetchone()[0]
 
-    # When deviated from recommendation
-    deviated_hands = [hand for hand in session if not hand["followed_recommendation"]]
-    deviated_wins = sum(1 for hand in deviated_hands if hand["won"])
-    deviated_win_rate = deviated_wins / len(deviated_hands) if deviated_hands else 0
+    cursor.execute("SELECT COUNT(*) FROM hands WHERE followed_recommendation = 0")
+    deviated = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM hands WHERE followed_recommendation = 0 AND won = 1")
+    deviated_wins = cursor.fetchone()[0]
+
+    conn.close()
 
     return {
         "total_hands": total_hands,
         "wins": wins,
-        "win_rate": round(win_rate * 100, 1),
-        "follow_rate": round(follow_rate * 100, 1),
-        "avg_equity": round(avg_equity, 1),
-        "followed_win_rate": round(followed_win_rate * 100, 1),
-        "deviated_win_rate": round(deviated_win_rate * 100, 1)
+        "win_rate": round(wins / total_hands * 100, 1),
+        "avg_equity": avg_equity,
+        "follow_rate": round(followed / total_hands * 100, 1),
+        "followed_win_rate": round(followed_wins / followed * 100, 1) if followed > 0 else 0,
+        "deviated_win_rate": round(deviated_wins / deviated * 100, 1) if deviated > 0 else 0
     }
