@@ -178,6 +178,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     print("\n-- PRE-FLOP --")
     print(f"  Position: {position_label}")
+    display_acting_order(num_players, position, "preflop")
 
     if position == 1:
         print("  You are the Small Blind -- you must post the small blind before action begins.")
@@ -216,6 +217,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     board = flop
 
     print("\n-- FLOP --")
+    display_acting_order(num_players, position, "postflop")
     pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
 
     if not is_all_in:
@@ -261,6 +263,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     board = board + [turn]
 
     print("\n-- TURN --")
+    display_acting_order(num_players, position, "postflop")
     pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
 
     if not is_all_in:
@@ -277,7 +280,6 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
 
     if is_all_in:
-        hand_desc = describe_hand(player_hand, board)
         hand_desc = describe_hand(player_hand, board)
         best_cards = best_hand_cards(player_hand + board)
         best_str = ", ".join(str(c) for c in best_cards)
@@ -308,6 +310,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     board = board + [river]
 
     print("\n-- RIVER --")
+    display_acting_order(num_players, position, "postflop")
     pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
 
     if not is_all_in:
@@ -366,6 +369,34 @@ def get_card_input(prompt, used_cards=None):
             return card
         except ValueError as e:
             print(f"Error: {e}. Please try again.")
+
+def get_acting_order(num_players, position, street):
+    positions = list(range(1, num_players + 1))
+    if street == "preflop":
+        # UTG first, blinds last
+        order = positions[2:] + positions[:2]
+    else:
+        # SB first, dealer last
+        order = positions
+    return order
+
+def display_acting_order(num_players, position, street):
+    order = get_acting_order(num_players, position, street)
+    position_labels = {1: "SB", 2: "BB"}
+    if num_players >= 3:
+        position_labels[num_players] = "Dealer"
+    if num_players >= 4:
+        position_labels[num_players - 1] = "Cutoff"
+    for i in range(3, num_players - 1):
+        if i == 3:
+            position_labels[i] = "UTG"
+        else:
+            position_labels[i] = f"UTG+{i-3}"
+
+    order_str = " → ".join([position_labels.get(p, str(p)) + (" (YOU)" if p == position else "") for p in order])
+    acting_index = order.index(position) + 1
+    print(f"  Acting order: {order_str}")
+    print(f"  You act {acting_index} of {num_players}")
 
 def main():
     while True:
