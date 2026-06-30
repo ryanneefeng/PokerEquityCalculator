@@ -49,38 +49,41 @@ No external libraries required.
       Poker Hand Equity Calculator
 ===========================================
 
-How many players at the table (including you)? 3
+Mode:
+1 = Single calculation
+2 = Full game mode (pre-flop to river)
+3 = View session stats
+
+Select mode (1, 2, or 3): 1
+
+How many players at the table (including you)? 4
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: 8 spades
-Card 2: J spades
-
-Mode:
-1 = Single calculation, 2 = Full game mode (pre-flop to river)
-Select mode (1 or 2): 1
+Card 1: Q spades
+Card 2: 10 clubs
 
 How many cards are on the board?
 0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
 Number of board cards: 3
-Board card 1: A spades
-Board card 2: 10 clubs
-Board card 3: 2 spades
+Board card 1: 10 diamonds
+Board card 2: 5 clubs
+Board card 3: 4 clubs
 
 Have any players revealed their cards (folded and shown)? (y/n): n
 
-Current pot size: $600
-Bet to call ($0 if none): $200
-Your remaining stack size: $1200
+Current pot size: $120
+Bet to call ($0 if none): $30
+Your remaining stack size: $500
 
 Running simulation...
 
 ===========================================
-  Hand:       High Card with Flush Draw
-  Best 5:     8 of Spades, J of Spades, A of Spades, 10 of Clubs, 2 of Spades
-  Equity:     46.7%
-  Tie Rate:   2.1%
-  Action:     Raise Small or Call
-  Reason:     Equity 46.7% beats pot odds 25.0%. Raise to $400.0 total or just call $200.0
+  Hand:       Pair with Backdoor Flush Draw
+  Best 5:     Q of Spades, 10 of Clubs, 10 of Diamonds, 5 of Clubs, 4 of Clubs
+  Equity:     44.1%
+  Tie Rate:   1.6%
+  Action:     Call
+  Reason:     Equity 44.1% beats pot odds 20.0%. Call $30.0
 ===========================================
 
 Play another hand? (y/n): n
@@ -100,83 +103,70 @@ Mode:
 
 Select mode (1, 2, or 3): 2
 
-How many players at the table (including you)? 4
+How many players at the table (including you)? 5
 
 Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: Q clubs
-Card 2: 10 spades
+Card 1: 8 spades
+Card 2: 8 clubs
+
+What is your seat position at the table?
+1 = Small Blind, 2 = Big Blind, 3 to 5 = UTG to Dealer
+Your position (1-5): 3
+
+You are playing from: UTG
 
 -- PRE-FLOP --
+  Position: UTG
+  Acting order: UTG (YOU) → Cutoff → Dealer → SB → BB
+  You act 1 of 5
+  You are not a blind -- you can fold, call, or raise freely.
 
-Current pot size: $150
-Bet to call ($0 if none): $50
-Your remaining stack size ($0 if all-in): $850
+Current pot size: $60
+Bet to call ($0 if none): $40
+Your remaining stack size ($0 if all-in): $500 
 
 ===========================================
-  Hand:       Q-10 Offsuit
-  Equity:     29.1%
-  Tie Rate:   2.6%
-  Action:     Call or Fold
-  Reason:     Equity 29.1% close to pot odds 25.0%. Call $50.0 or fold
+  Hand:       Pocket 8s
+  Equity:     23.9%
+  Tie Rate:   1.0%
+  Action:     Fold
+  Reason:     Equity 23.9% well below pot odds 40.0%
 ===========================================
 
 What did you do? (fold, call, raise, check): call
+Risky call. I hope luck is on your side!
 
 Did anyone fold this round? (y/n): n
 Press Enter to continue to the Flop...
 
 Enter the 3 Flop cards:
-Flop card 1: 5 spades
-Flop card 2: J hearts
-Flop card 3: 10 diamonds
+Flop card 1: A hearts
+Flop card 2: 10 diamonds
+Flop card 3: 8 diamonds
 
 -- FLOP --
+  Acting order: SB → BB → UTG (YOU) → Cutoff → Dealer
+  You act 3 of 5
 
-Current pot size: $200
-Bet to call ($0 if none): $0
-Your remaining stack size ($0 if all-in): $800
+Current pot size: $300
+Bet to call ($0 if none): $60
+Your remaining stack size ($0 if all-in): $460
+
+Did anyone fold or reveal cards before your turn this street? (y/n): n
 
 ===========================================
-  Hand:       Pair
-  Best 5:     Q of Clubs, 10 of Spades, 5 of Spades, J of Hearts, 10 of Diamonds
-  Equity:     44.7%
-  Tie Rate:   3.2%
+  Hand:       Three of a Kind
+  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 10 of Diamonds, 8 of Diamonds
+  Equity:     73.6%
+  Tie Rate:   0.1%
   Key cards next street:
-    10 of Clubs -> 87.7% (+45.3%)
-    10 of Hearts -> 84.7% (+42.3%)
-    Q of Hearts -> 62.7% (+20.3%)
-    Q of Diamonds -> 58.7% (+16.3%)
-    Q of Spades -> 58.3% (+16.0%)
-  Action:     Raise if confident or Check
-  Reason:     Equity 44.7%
-===========================================
-
-What did you do? (fold, call, raise, check): check
-
-Did anyone fold this round? (y/n): n
-Press Enter to continue to the Turn...
-
-Turn card: Q hearts
-
--- TURN --
-
-Current pot size: $400
-Bet to call ($0 if none): $100
-Your remaining stack size ($0 if all-in): $800
-
-===========================================
-  Hand:       Two Pair
-  Best 5:     Q of Clubs, 10 of Spades, J of Hearts, 10 of Diamonds, Q of Hearts
-  Equity:     60.9%
-  Tie Rate:   1.4%
-  Key cards next street:
-    K of Hearts -> 16.3% (-47.0%)
-    K of Diamonds -> 19.3% (-44.0%)
-    K of Spades -> 22.7% (-40.7%)
-    9 of Hearts -> 23.0% (-40.3%)
-    K of Clubs -> 23.3% (-40.0%)
+    8 of Hearts -> 100.0% (+25.3%)
+    9 of Diamonds -> 51.0% (-23.7%)
+    J of Diamonds -> 51.7% (-23.0%)
+    7 of Diamonds -> 53.0% (-21.7%)
+    Q of Diamonds -> 54.0% (-20.7%)
   Action:     Raise
-  Reason:     Equity 60.9% far exceeds pot odds 20.0%. Raise to $240.0 total
+  Reason:     Equity 73.6% is strong regardless of pot odds. Raise to $138.0 total
 ===========================================
 
 What did you do? (fold, call, raise, check): raise
@@ -184,23 +174,65 @@ What did you do? (fold, call, raise, check): raise
 Did anyone fold this round? (y/n): y
 How many players folded? 1
 Did any of them show their hand? (y/n): n
-Press Enter to continue to the River...
+Press Enter to continue to the Turn...
 
-River card: 10 clubs
+Turn card: A spades
 
--- RIVER --
+-- TURN --
+  Acting order: SB → BB → UTG (YOU) → Dealer
+  You act 3 of 4
 
-Current pot size: $800
-Bet to call ($0 if none): $150
-Your remaining stack size ($0 if all-in): $700
+Current pot size: $650
+Bet to call ($0 if none): $75 
+Your remaining stack size ($0 if all-in): $322
+
+Did anyone fold or reveal cards before your turn this street? (y/n): y
+How many players folded? 1
+Did any of them show their hand? (y/n): y
+
+Enter the 2 cards for the player who showed hand 1:
+Card 1: J spades
+Card 2: 4 clubs
 
 ===========================================
   Hand:       Full House
-  Best 5:     Q of Clubs, 10 of Spades, 10 of Diamonds, Q of Hearts, 10 of Clubs
-  Equity:     99.5%
+  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 8 of Diamonds, A of Spades
+  Equity:     91.9%
   Tie Rate:   0.3%
+  Key cards next street:
+    A of Clubs -> 57.3% (-32.3%)
+    A of Diamonds -> 61.0% (-28.7%)
+    10 of Spades -> 63.7% (-26.0%)
+    10 of Clubs -> 68.3% (-21.3%)
+    10 of Hearts -> 68.7% (-21.0%)
   Action:     Raise (All-In consideration)
-  Reason:     Equity 99.5% is dominant. Raise to $560.0 total
+  Reason:     Equity 91.9% is dominant. Raise to $257.6 total
+===========================================
+
+What did you do? (fold, call, raise, check): raise
+
+Did anyone fold this round? (y/n): n
+Press Enter to continue to the River...
+
+River card: J hearts
+
+-- RIVER --
+  Acting order: SB → BB → Dealer (YOU)
+  You act 3 of 3
+
+Current pot size: $1100
+Bet to call ($0 if none): $75
+Your remaining stack size ($0 if all-in): $175
+
+Did anyone fold or reveal cards before your turn this street? (y/n): n
+
+===========================================
+  Hand:       Full House
+  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 8 of Diamonds, A of Spades
+  Equity:     96.5%
+  Tie Rate:   0.0%
+  Action:     Raise (All-In consideration)
+  Reason:     Equity 96.5% is dominant. Raise to $150.0 total
 ===========================================
 
 What did you do? (fold, call, raise, check): raise
