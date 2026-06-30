@@ -72,6 +72,60 @@ def get_player_action(reccomendation):
                 print(f"You chose to {action} instead of the recommended action: {reccomendation}. I hope luck is on your side!")
         return action
 
+def handle_folds_before(num_players, known_opponents, dead_cards, used_cards):
+    while True:
+        folded = input("\nDid anyone fold or reveal cards before your turn this street? (y/n): ").lower().strip()
+        if folded in ["y", "n"]:
+            break
+        print("Please enter y or n.")
+
+    if folded == "n":
+        return num_players, known_opponents, dead_cards
+
+    while True:
+        try:
+            num_folded = int(input("How many players folded? "))
+            if num_folded < 1 or num_folded >= num_players:
+                print(f"Please enter a number between 1 and {num_players - 1}.")
+                continue
+            break
+        except ValueError:
+            print("Please enter a valid number.")
+
+    num_players -= num_folded
+
+    if num_players == 1:
+        return num_players, known_opponents, dead_cards
+
+    while True:
+        showed = input("Did any of them show their hand? (y/n): ").lower().strip()
+        if showed in ["y", "n"]:
+            break
+        print("Please enter y or n.")
+
+    if showed == "y":
+        if num_folded == 1:
+            num_showed = 1
+        else:
+            while True:
+                try:
+                    num_showed = int(input("How many showed their hand? "))
+                    if num_showed < 1 or num_showed > num_folded:
+                        print(f"Please enter a number between 1 and {num_folded}.")
+                        continue
+                    break
+                except ValueError:
+                    print("Please enter a valid number.")
+
+        for i in range(num_showed):
+            print(f"\nEnter the 2 cards for the player who showed hand {i + 1}:")
+            card1 = get_card_input("Card 1: ", used_cards)
+            card2 = get_card_input("Card 2: ", used_cards)
+            dead_cards.append(card1)
+            dead_cards.append(card2)
+
+    return num_players, known_opponents, dead_cards
+
 def handle_folds(num_players, known_opponents, dead_cards, used_cards):
     while True:
         folded = input("\nDid anyone fold this round? (y/n): ").lower().strip()
@@ -148,12 +202,16 @@ def get_position(num_players):
         label = "Small Blind"
     elif position == 2:
         label = "Big Blind"
+    elif position == 3:
+        label = "UTG"
     elif position == num_players:
         label = "Dealer (Button)"
-    elif position == num_players - 1:
+    elif position == num_players - 1 and num_players >= 5:
         label = "Cutoff"
+    elif position > 3:
+        label = f"UTG+{position - 3}"
     else:
-        label = f"UTG+{position - 3}" if position > 3 else "UTG"
+        label = "UTG"
 
     print(f"\nYou are playing from: {label}")
     return position, label
@@ -186,6 +244,16 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         print("  You are the Big Blind -- you must post the big blind before action begins.")
     else:
         print("  You are not a blind -- you can fold, call, or raise freely.")
+
+    preflop_order = get_acting_order(num_players, position, "preflop")
+    your_preflop_index = preflop_order.index(position)
+    if your_preflop_index > 0:
+        num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
+        if num_players == 1:
+            print("Everyone folded. You win the pot!")
+            log_hand(player_hand, board, num_players, equity, action, player_action, True)
+            print("\nHand logged.")
+            return
 
     pot_size, bet_to_call, stack_size = get_pot_info()
     equity, tie_rate = calculate_equity(player_hand, [], num_players, known_opponents=known_opponents, dead_cards=dead_cards)
@@ -231,6 +299,13 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     prev_pot = pot_size
     prev_stack = stack_size
 
+    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
+    if num_players == 1:
+        print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
+        return
+    
     equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
 
     if is_all_in:
@@ -240,8 +315,10 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         print("\n===========================================")
         print(f"  Hand:       {hand_desc}")
         print(f"  Best 5:     {best_str}")
+        if projections and base_equity is not None:
+            display_projections(projections, base_equity)
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
-        print("===========================================\n")
+        print("===========================================")
     else:
         projections, base_equity = project_next_street(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
         action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
@@ -257,6 +334,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         log_hand(player_hand, board, num_players, equity, action, player_action, True)
         print("\nHand logged.")
         return
+    
     # Turn
     input("Press Enter to continue to the Turn...")
     turn = get_card_input("\nTurn card: ", used_cards)
@@ -276,7 +354,14 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     prev_pot = pot_size
     prev_stack = stack_size
-
+    
+    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
+    if num_players == 1:
+        print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
+        return
+    
     equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
 
     if is_all_in:
@@ -321,6 +406,13 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         if stack_size == 0:
             is_all_in = True
 
+    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
+    if num_players == 1:
+        print("Everyone folded. You win the pot!")
+        log_hand(player_hand, board, num_players, equity, action, player_action, True)
+        print("\nHand logged.")
+        return
+    
     equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
 
     if is_all_in:
@@ -382,16 +474,11 @@ def get_acting_order(num_players, position, street):
 
 def display_acting_order(num_players, position, street):
     order = get_acting_order(num_players, position, street)
-    position_labels = {1: "SB", 2: "BB"}
-    if num_players >= 3:
-        position_labels[num_players] = "Dealer"
-    if num_players >= 4:
+    position_labels = {1: "SB", 2: "BB", 3: "UTG", num_players: "Dealer"}
+    if num_players >= 5:
         position_labels[num_players - 1] = "Cutoff"
-    for i in range(3, num_players - 1):
-        if i == 3:
-            position_labels[i] = "UTG"
-        else:
-            position_labels[i] = f"UTG+{i-3}"
+    for i in range(4, num_players - 1 if num_players >= 5 else num_players):
+        position_labels[i] = f"UTG+{i-3}"
 
     order_str = " → ".join([position_labels.get(p, str(p)) + (" (YOU)" if p == position else "") for p in order])
     acting_index = order.index(position) + 1

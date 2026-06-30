@@ -11,6 +11,9 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
     total_pot = pot_size + bet_to_call
     effective_equity = equity + (tie_rate / 2)
 
+    if tie_rate >= 0.90:
+        return "Check or Call", f"The best hand is on the board. Likely a chop pot - equity {equity*100:.1f}%, tie rate {tie_rate*100:.1f}%"
+    
     if bet_to_call == 0:
         if equity >= 0.85:
             raise_amount, is_all_in = cap_raise(min_raise(0, min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), stack_size)
@@ -62,3 +65,4 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         return "Call or Fold", f"Equity {equity*100:.1f}% close to pot odds {pot_odds*100:.1f}%. Call ${bet_to_call} or fold"
     else:
         return "Fold", f"Equity {equity*100:.1f}% well below pot odds {pot_odds*100:.1f}%"
+    
