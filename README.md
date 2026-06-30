@@ -23,6 +23,7 @@ interest in probability and quantitative decision making.
 - **Continuous Game Mode** - follows a full hand from pre-flop through the river with live equity updates, fold tracking, dead card removal, and action logging
 - **Input Safety** - duplicate card prevention, pot and stack sanity checks between streets, and full input validation throughout
 - **Session Logging** - automatically logs every continuous mode hand to a JSON file including hole cards, board, equity, recommendation, action taken, and outcome
+- **Position Awareness** - tracks your seat position and displays acting order at each street, distinguishing between folds that occurred before and after your action so equity is calculated with accurate information
 
 ## How It Works
 
@@ -257,6 +258,7 @@ PokerEquityCalculator/
 │   ├── test_evaluator.py
 │   ├── test_equity.py
 │   └── test_session.py
+│   └── test_position.py
 │
 ├── main.py            # Entry point and user input handling
 ├── README.md
@@ -321,10 +323,10 @@ tracking, dead card memory, and all-in detection across streets.
 
 **Dead cards vs known opponents** - cards shown by folded players are tracked separately from active known opponent hands. Folded cards are removed from the deck as dead cards but the folder is not simulated as an active opponent. This correctly models two separate effects: fewer cards available in the deck, and fewer players competing for the pot.
 
-## Planned Enhancements
+## Future Ideas
 
-**Phase 3**
-- Position awareness - track seat order and adjust available decisions and fold information based on when the player acts in each betting round
+- Position-based recommendation adjustments - factor in acting position when suggesting raise sizes and aggression levels, since acting last provides an informational advantage worth exploiting
+- SQL query interface - expose session data for custom queries and deeper hand history analysis
 
 ## Requirements
 
