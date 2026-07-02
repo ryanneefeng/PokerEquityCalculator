@@ -1,4 +1,3 @@
-import random
 from src.deck import Deck, Card, RANKS, SUITS
 from src.evaluator import best_hand
 

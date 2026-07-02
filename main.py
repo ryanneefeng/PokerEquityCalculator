@@ -25,8 +25,6 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
             print(f"  Best 5:     {best_str}")
     print(f"  Equity:     {equity * 100:.1f}%")
     print(f"  Tie Rate:   {tie_rate * 100:.1f}%")
-    if projections and base_equity is not None:
-        display_projections(projections, base_equity)
     print(f"  Action:     {action}")
     print(f"  Reason:     {explanation}")
     print("===========================================")
@@ -44,7 +42,7 @@ def get_pot_info(all_in=False):
         except ValueError:
             print("Please enter a valid number.")
             
-def get_player_action(reccomendation):
+def get_player_action(recommendation):
     valid_actions = ["fold", "call", "raise", "check"]
     while True:
         action = input("\nWhat did you do? (fold, call, raise, check): ").lower().strip()
@@ -52,24 +50,24 @@ def get_player_action(reccomendation):
             print("Invalid action. Please enter fold, call, raise, or check.")
             continue
         if action == "fold":
-            if reccomendation.lower().startswith("fold"):
+            if recommendation.lower().startswith("fold"):
                 print("Good fold, hand over")
             else:
                 print("You folded, hand over")
             return "fold"
         if action == "check":
             return "check"
-        if action == "call" and "call" in reccomendation.lower():
+        if action == "call" and "call" in recommendation.lower():
             return action
-        if action != reccomendation.split()[0].lower():
-            if action == "raise" and "call" in reccomendation.lower():
+        if action != recommendation.split()[0].lower():
+            if action == "raise" and "call" in recommendation.lower():
                 print("Bold move. I hope luck is on your side!")
-            elif action == "call" and "raise" in reccomendation.lower():
+            elif action == "call" and "raise" in recommendation.lower():
                 print("Playing it safe. I hope you don't regret that later!")
-            elif action == "call" and "fold" in reccomendation.lower():
+            elif action == "call" and "fold" in recommendation.lower():
                 print("Risky call. I hope luck is on your side!")
             else:
-                print(f"You chose to {action} instead of the recommended action: {reccomendation}. I hope luck is on your side!")
+                print(f"You chose to {action} instead of the recommended action: {recommendation}. I hope luck is on your side!")
         return action
 
 def handle_folds_before(num_players, known_opponents, dead_cards, used_cards):
@@ -315,8 +313,6 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         print("\n===========================================")
         print(f"  Hand:       {hand_desc}")
         print(f"  Best 5:     {best_str}")
-        if projections and base_equity is not None:
-            display_projections(projections, base_equity)
         print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
         print("===========================================")
     else:
