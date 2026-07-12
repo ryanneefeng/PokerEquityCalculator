@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)]()
+[![Status](https://img.shields.io/badge/Status-Complete-success.svg)]()
 
 A Texas Hold'em poker equity calculator built in Python that uses Monte Carlo
 simulation to estimate a player's probability of winning a hand and recommends
