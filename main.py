@@ -214,6 +214,125 @@ def get_position(num_players):
     print(f"\nYou are playing from: {label}")
     return position, label
 
+def ask_action_reopened():
+    while True:
+        reopened = input("\nAfter your action, did a player still to act raise (reopening the betting)? (y/n): ").lower().strip()
+        if reopened in ["y", "n"]:
+            return reopened == "y"
+        print("Please enter y or n.")
+
+def run_betting_round(street_label, num_players, known_opponents, dead_cards, used_cards,
+                       player_hand, board, is_all_in, prev_pot, prev_stack,
+                       show_projections=False, skip_first_folds_before=False):
+    """
+    Runs the user's decision(s) for a single street.
+
+    A street isn't always one decision. If a player who acts after the user
+    raises, the action reopens: the pot just grew, the bet to call is new,
+    and pot odds have to be recalculated -- the user needs a fresh
+    recommendation and a real chance to act again, not stale numbers carried
+    into the next street. This loops for exactly that case, and keeps looping
+    through re-raise wars until action actually closes on the user (or
+    everyone folds, or the user is all-in and has no more decisions to make).
+    """
+    equity, tie_rate = 0.0, 0.0
+    action, player_action = "", ""
+    reopened = False
+
+    while True:
+        if not (skip_first_folds_before and not reopened):
+            num_players, known_opponents, dead_cards = handle_folds_before(
+                num_players, known_opponents, dead_cards, used_cards
+            )
+            if num_players == 1:
+                return {
+                    "status": "won_by_fold", "num_players": num_players,
+                    "known_opponents": known_opponents, "dead_cards": dead_cards,
+                    "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+                    "equity": equity, "action": action, "player_action": player_action,
+                }
+
+        if reopened:
+            print(f"\n  Action reopens on the {street_label} -- a player raised after your last action.")
+            print("  Pot odds have changed, so let's get an updated read before you act again.")
+
+        pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
+
+        if not is_all_in:
+            if prev_pot is not None and pot_size < prev_pot:
+                print(f"Warning: pot size decreased from ${prev_pot} to ${pot_size}. Please ensure you entered the correct pot size.")
+            if prev_stack is not None and stack_size > prev_stack:
+                print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
+            if stack_size == 0:
+                is_all_in = True
+
+        prev_pot, prev_stack = pot_size, stack_size
+
+        equity, tie_rate = calculate_equity(
+            player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
+        )
+
+        if is_all_in:
+            hand_desc = describe_hand(player_hand, board)
+            best_cards = best_hand_cards(player_hand + board)
+            best_str = ", ".join(str(c) for c in best_cards)
+            print("\n===========================================")
+            print(f"  Hand:       {hand_desc}")
+            print(f"  Best 5:     {best_str}")
+            print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
+            print("===========================================")
+            # No more decisions once you're all-in, but others can still
+            # fold among themselves before the next card is dealt.
+            num_players, known_opponents, dead_cards = handle_folds(
+                num_players, known_opponents, dead_cards, used_cards
+            )
+            if num_players == 1:
+                return {
+                    "status": "won_by_fold", "num_players": num_players,
+                    "known_opponents": known_opponents, "dead_cards": dead_cards,
+                    "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+                    "equity": equity, "action": action, "player_action": player_action,
+                }
+            return {
+                "status": "continue", "num_players": num_players, "known_opponents": known_opponents,
+                "dead_cards": dead_cards, "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+                "equity": equity, "action": action, "player_action": player_action,
+            }
+
+        if show_projections:
+            projections, base_equity = project_next_street(
+                player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
+            )
+            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
+        else:
+            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
+
+        player_action = get_player_action(action)
+        if player_action == "fold":
+            return {
+                "status": "folded", "num_players": num_players, "known_opponents": known_opponents,
+                "dead_cards": dead_cards, "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+                "equity": equity, "action": action, "player_action": player_action,
+            }
+
+        num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
+        if num_players == 1:
+            return {
+                "status": "won_by_fold", "num_players": num_players, "known_opponents": known_opponents,
+                "dead_cards": dead_cards, "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+                "equity": equity, "action": action, "player_action": player_action,
+            }
+
+        if not ask_action_reopened():
+            break
+        reopened = True
+
+    return {
+        "status": "continue", "num_players": num_players, "known_opponents": known_opponents,
+        "dead_cards": dead_cards, "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
+        "equity": equity, "action": action, "player_action": player_action,
+    }
+
 def continuous_game(num_players, player_hand, known_opponents=None, used_cards=None):
     if known_opponents is None:
         known_opponents = []
@@ -221,7 +340,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         used_cards = set()
     dead_cards = []
     is_all_in = False
-    
+
     board = []
     equity = 0.0
     action = ""
@@ -245,184 +364,59 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
 
     preflop_order = get_acting_order(num_players, position, "preflop")
     your_preflop_index = preflop_order.index(position)
-    if your_preflop_index > 0:
-        num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
-        if num_players == 1:
+
+    streets = [
+        ("Pre-Flop", False, your_preflop_index == 0),
+        ("Flop", True, False),
+        ("Turn", True, False),
+        ("River", False, False),
+    ]
+
+    for street_label, show_projections, skip_first_folds_before in streets:
+        if street_label == "Flop":
+            input("Press Enter to continue to the Flop...")
+            print("\nEnter the 3 Flop cards:")
+            flop = [get_card_input(f"Flop card {i + 1}: ", used_cards) for i in range(3)]
+            board = flop
+            print("\n-- FLOP --")
+            display_acting_order(num_players, position, "postflop")
+        elif street_label == "Turn":
+            input("Press Enter to continue to the Turn...")
+            turn = get_card_input("\nTurn card: ", used_cards)
+            board = board + [turn]
+            print("\n-- TURN --")
+            display_acting_order(num_players, position, "postflop")
+        elif street_label == "River":
+            input("Press Enter to continue to the River...")
+            river = get_card_input("\nRiver card: ", used_cards)
+            board = board + [river]
+            print("\n-- RIVER --")
+            display_acting_order(num_players, position, "postflop")
+
+        result = run_betting_round(
+            street_label, num_players, known_opponents, dead_cards, used_cards,
+            player_hand, board, is_all_in, prev_pot, prev_stack,
+            show_projections=show_projections, skip_first_folds_before=skip_first_folds_before,
+        )
+        num_players = result["num_players"]
+        known_opponents = result["known_opponents"]
+        dead_cards = result["dead_cards"]
+        is_all_in = result["is_all_in"]
+        prev_pot = result["prev_pot"]
+        prev_stack = result["prev_stack"]
+        equity = result["equity"]
+        action = result["action"]
+        player_action = result["player_action"]
+
+        if result["status"] == "won_by_fold":
             print("Everyone folded. You win the pot!")
             log_hand(player_hand, board, num_players, equity, action, player_action, True)
             print("\nHand logged.")
             return
-
-    pot_size, bet_to_call, stack_size = get_pot_info()
-    equity, tie_rate = calculate_equity(player_hand, [], num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-    action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, [])
-
-    player_action = get_player_action(action)
-    if player_action == "fold":
-        log_hand(player_hand, board, num_players, equity, action, player_action, False)
-        print("\nHand logged.")
-        return
-
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-
-    prev_pot = pot_size
-    prev_stack = stack_size
-
-    # Flop
-    input("Press Enter to continue to the Flop...")
-    print("\nEnter the 3 Flop cards:")
-    flop = []
-    for i in range(3):
-        card = get_card_input(f"Flop card {i + 1}: ", used_cards)
-        flop.append(card)
-    board = flop
-
-    print("\n-- FLOP --")
-    display_acting_order(num_players, position, "postflop")
-    pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
-
-    if not is_all_in:
-        if pot_size < prev_pot:
-            print(f"Warning: pot size decreased from ${prev_pot} to ${pot_size}. Please ensure you entered the correct pot size.")
-        if stack_size > prev_stack:
-            print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
-        if stack_size == 0:
-            is_all_in = True
-
-    prev_pot = pot_size
-    prev_stack = stack_size
-
-    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-    
-    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-
-    if is_all_in:
-        hand_desc = describe_hand(player_hand, board)
-        best_cards = best_hand_cards(player_hand + board)
-        best_str = ", ".join(str(c) for c in best_cards)
-        print("\n===========================================")
-        print(f"  Hand:       {hand_desc}")
-        print(f"  Best 5:     {best_str}")
-        print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
-        print("===========================================")
-    else:
-        projections, base_equity = project_next_street(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
-        player_action = get_player_action(action)
-        if player_action == "fold":
+        if result["status"] == "folded":
             log_hand(player_hand, board, num_players, equity, action, player_action, False)
             print("\nHand logged.")
             return
-
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-    
-    # Turn
-    input("Press Enter to continue to the Turn...")
-    turn = get_card_input("\nTurn card: ", used_cards)
-    board = board + [turn]
-
-    print("\n-- TURN --")
-    display_acting_order(num_players, position, "postflop")
-    pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
-
-    if not is_all_in:
-        if pot_size < prev_pot:
-            print(f"Warning: pot size decreased from ${prev_pot} to ${pot_size}. Please ensure you entered the correct pot size.")
-        if stack_size > prev_stack:
-            print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
-        if stack_size == 0:
-            is_all_in = True
-
-    prev_pot = pot_size
-    prev_stack = stack_size
-    
-    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-    
-    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-
-    if is_all_in:
-        hand_desc = describe_hand(player_hand, board)
-        best_cards = best_hand_cards(player_hand + board)
-        best_str = ", ".join(str(c) for c in best_cards)
-        print("\n===========================================")
-        print(f"  Hand:       {hand_desc}")
-        print(f"  Best 5:     {best_str}")
-        print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
-        print("===========================================\n")
-    else:
-        projections, base_equity = project_next_street(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
-        player_action = get_player_action(action)
-        if player_action == "fold":
-            log_hand(player_hand, board, num_players, equity, action, player_action, False)
-            print("\nHand logged.")
-            return
-
-    num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-
-    # River
-    input("Press Enter to continue to the River...")
-    river = get_card_input("\nRiver card: ", used_cards)
-    board = board + [river]
-
-    print("\n-- RIVER --")
-    display_acting_order(num_players, position, "postflop")
-    pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
-
-    if not is_all_in:
-        if pot_size < prev_pot:
-            print(f"Warning: pot size decreased from ${prev_pot} to ${pot_size}. Please ensure you entered the correct pot size.")
-        if stack_size > prev_stack:
-            print(f"Warning: stack size increased from ${prev_stack} to ${stack_size}. Please ensure you entered the correct stack size.")
-        if stack_size == 0:
-            is_all_in = True
-
-    num_players, known_opponents, dead_cards = handle_folds_before(num_players, known_opponents, dead_cards, used_cards)
-    if num_players == 1:
-        print("Everyone folded. You win the pot!")
-        log_hand(player_hand, board, num_players, equity, action, player_action, True)
-        print("\nHand logged.")
-        return
-    
-    equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-
-    if is_all_in:
-        hand_desc = describe_hand(player_hand, board)
-        best_cards = best_hand_cards(player_hand + board)
-        best_str = ", ".join(str(c) for c in best_cards)
-        print("\n===========================================")
-        print(f"  Hand:       {hand_desc}")
-        print(f"  Best 5:     {best_str}")
-        print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
-        print("===========================================\n")
-    else:
-        action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
-        player_action = get_player_action(action)
 
     while True:
         won_input = input("\nDid you win this hand? (y/n): ").lower().strip()
