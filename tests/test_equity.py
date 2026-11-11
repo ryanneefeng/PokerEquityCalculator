@@ -99,3 +99,19 @@ def test_project_next_street_empty_on_river():
     board = make_cards([("2", "Hearts"), ("7", "Hearts"), ("9", "Clubs"), ("3", "Diamonds"), ("4", "Spades")])
     result = project_next_street(player_hand, board, 2, simulations=200)
     assert result == []
+
+def test_exact_equity_full_house_uses_trip_rank():
+    player_hand = make_cards([("2", "Hearts"), ("A", "Diamonds")])
+    opponent_hand = [make_cards([("K", "Clubs"), ("Q", "Clubs")])]
+    board = make_cards([("K", "Hearts"), ("K", "Diamonds"), ("2", "Clubs"), ("2", "Spades"), ("A", "Hearts")])
+    equity, tie_rate = calculate_equity(player_hand, board, 2, known_opponents=opponent_hand)
+    assert equity == 0.0
+    assert tie_rate == 0.0
+
+def test_exact_equity_wheel_loses_to_six_high():
+    player_hand = make_cards([("A", "Spades"), ("9", "Diamonds")])
+    opponent_hand = [make_cards([("6", "Clubs"), ("Q", "Diamonds")])]
+    board = make_cards([("2", "Hearts"), ("3", "Diamonds"), ("4", "Clubs"), ("5", "Spades"), ("K", "Hearts")])
+    equity, tie_rate = calculate_equity(player_hand, board, 2, known_opponents=opponent_hand)
+    assert equity == 0.0
+    assert tie_rate == 0.0
