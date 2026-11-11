@@ -38,7 +38,7 @@ def evaluate_hand(cards):
     # Check for ace-low straight
     if not is_straight and set(indices) == {0, 1, 2, 3, 12}:
         is_straight = True
-        indices = [0, 1, 2, 3, 4]  # treat ace as low
+        indices = [-1, 0, 1, 2, 3]  # treat ace as below 2
     rank_counts = {}
     
     for rank in ranks:
@@ -71,6 +71,15 @@ def evaluate_hand(cards):
         hand_rank = HAND_RANKINGS["High Card"]
 
     tiebreaker = sorted(indices, reverse=True)
+    if counts[0] > 1:
+        # Compare matching ranks before kickers
+        tiebreaker = []
+        for count in sorted(set(counts), reverse=True):
+            matching_ranks = []
+            for rank in rank_counts:
+                if rank_counts[rank] == count:
+                    matching_ranks.append(RANKS.index(rank))
+            tiebreaker.extend(sorted(matching_ranks, reverse=True))
     return (hand_rank, tiebreaker)
 
 
