@@ -42,12 +42,24 @@ def get_pot_info(all_in=False):
         except ValueError:
             print("Please enter a valid number.")
             
-def get_player_action(recommendation):
+def get_player_action(recommendation, bet_to_call=0, stack_size=None, can_raise=True):
     valid_actions = ["fold", "call", "raise", "check"]
     while True:
         action = input("\nWhat did you do? (fold, call, raise, check): ").lower().strip()
         if action not in valid_actions:
             print("Invalid action. Please enter fold, call, raise, or check.")
+            continue
+        if action == "check" and bet_to_call > 0:
+            print("You cannot check while facing a bet. Call, raise, or fold.")
+            continue
+        if action == "call" and bet_to_call == 0:
+            print("There is no bet to call. Check, raise, or fold.")
+            continue
+        if action == "raise" and not can_raise:
+            print("Betting has not reopened for you. You can only call or fold.")
+            continue
+        if action == "raise" and stack_size is not None and stack_size <= bet_to_call:
+            print("You do not have enough chips to raise. Call all-in or fold.")
             continue
         if action == "fold":
             if recommendation.lower().startswith("fold"):
@@ -332,7 +344,7 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
         else:
             action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
 
-        player_action = get_player_action(action)
+        player_action = get_player_action(action, bet_to_call, stack_size)
         if player_action == "fold":
             return {
                 "status": "folded", "num_players": num_players, "known_opponents": known_opponents,
