@@ -3,27 +3,33 @@ def cap_raise(raise_amount, stack_size):
         return stack_size, True
     return raise_amount, False
 
-def min_raise(bet_to_call, raise_amount):
-    minimum = bet_to_call * 2
+def min_raise(current_bet, raise_amount, last_raise=None, big_blind=1):
+    if last_raise is None:
+        last_raise = max(current_bet, big_blind)
+    minimum = current_bet + max(last_raise, big_blind)
     return max(raise_amount, minimum)
 
-def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
+def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size,
+                       current_contribution=0, last_raise=None, big_blind=1):
     call_amount = min(bet_to_call, stack_size)
     total_pot = pot_size + call_amount
+    current_bet = current_contribution + bet_to_call
+    minimum_raise = min_raise(current_bet, 0, last_raise, big_blind)
+    total_stack = current_contribution + stack_size
     
     if bet_to_call == 0:
         if tie_rate == 1:
             return "Check", f"A split pot is certain in the simulation. Equity {equity*100:.1f}%"
         if equity >= 0.85:
-            raise_amount, is_all_in = cap_raise(min_raise(0, min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), stack_size)
+            raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), total_stack)
             label = "All-In" if (is_all_in and equity >= 0.65) else f"${raise_amount}"
             return "Raise (All-In consideration)", f"Equity {equity*100:.1f}%. Consider going all-in or raise to {label} total"
         elif equity >= 0.70:
-            raise_amount, is_all_in = cap_raise(min_raise(0, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), stack_size)
+            raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), total_stack)
             label = "All-In" if is_all_in else f"${raise_amount}"
             return "Raise", f"Equity {equity*100:.1f}%. Raise to {label} total (60% of pot)"
         elif equity >= 0.60:
-            raise_amount, is_all_in = cap_raise(min_raise(0, min(round(pot_size * 0.35, 2), round(stack_size * 0.20, 2))), stack_size)
+            raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.35, 2), round(stack_size * 0.20, 2))), total_stack)
             label = "All-In" if is_all_in else f"${raise_amount}"
             return "Raise Small", f"Equity {equity*100:.1f}%. Raise to {label} total (35% of pot)"
         elif equity >= 0.40:
@@ -47,20 +53,20 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
 
     #Equity override
     if equity >= 0.75:
-        raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), stack_size)
+        raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), total_stack)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise (All-In consideration)", f"Equity {equity*100:.1f}% is dominant. Raise to {label} total"
     elif equity >= 0.65:
-        raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), stack_size)
+        raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), total_stack)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% is strong regardless of pot odds. Raise to {label} total"
 
     if equity >= 0.55 and equity >= pot_odds + 0.20:
-        raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), stack_size)
+        raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), total_stack)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% far exceeds pot odds {pot_odds*100:.1f}%. Raise to {label} total"
     elif equity >= 0.45 and equity >= pot_odds + 0.10:
-        raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.35, 2), round(stack_size * 0.20, 2))), stack_size)
+        raise_amount, is_all_in = cap_raise(max(minimum_raise, current_contribution + min(round(pot_size * 0.35, 2), round(stack_size * 0.20, 2))), total_stack)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise Small or Call", f"Equity {equity*100:.1f}% beats pot odds {pot_odds*100:.1f}%. Raise to {label} total or just call ${bet_to_call}"
     else:

@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.decision import get_recommendation
+from src.decision import get_recommendation, min_raise
 
 def test_profitable_all_in_call_uses_pot_odds():
     action, explanation = get_recommendation(0.30, 0, 1000, 100, 100)
@@ -56,3 +56,33 @@ def test_all_in_call_amount_cannot_exceed_stack():
 def test_weak_hand_can_check_when_no_bet_is_faced():
     action, explanation = get_recommendation(0.19, 0, 100, 0, 500)
     assert action == "Check"
+
+def test_minimum_reraise_uses_last_increment():
+    assert min_raise(30, 0, last_raise=20, big_blind=2) == 50
+
+def test_minimum_opening_bet_is_big_blind():
+    assert min_raise(0, 0.9, last_raise=1, big_blind=1) == 1
+
+def test_short_all_in_does_not_reduce_next_raise_increment():
+    assert min_raise(130, 0, last_raise=100, big_blind=2) == 230
+
+def test_raise_over_short_opening_adds_a_full_increment():
+    assert min_raise(0.5, 0, last_raise=1, big_blind=1) == 1.5
+
+def test_raise_recommendation_counts_chips_already_committed():
+    action, explanation = get_recommendation(0.7, 0, 100, 20, 50,
+                                            current_contribution=40, last_raise=20, big_blind=2)
+    assert action == 'Raise'
+    assert '$80' in explanation
+
+def test_big_blind_option_recommends_a_raise_over_the_blind():
+    action, explanation = get_recommendation(0.7, 0, 3, 0, 100,
+                                            current_contribution=2, last_raise=2, big_blind=2)
+    assert action == 'Raise'
+    assert '$4' in explanation
+
+def test_recommended_short_raise_is_an_all_in():
+    action, explanation = get_recommendation(0.7, 0, 100, 20, 30,
+                                            current_contribution=40, last_raise=20, big_blind=2)
+    assert action == 'Raise'
+    assert 'All-In' in explanation

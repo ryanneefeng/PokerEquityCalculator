@@ -1,6 +1,7 @@
 from src.deck import Card, RANKS, SUITS
 from src.equity import calculate_equity, project_next_street
-from src.decision import get_recommendation
+from src.decision import get_recommendation, min_raise
+from math import isfinite
 from src.evaluator import describe_hand, best_hand_cards
 from src.session import log_hand, get_stats
 
@@ -13,8 +14,10 @@ def display_projections(projections, base_equity):
         direction = "+" if change >= 0 else ""
         print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f}%)")
 
-def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None):
-    action, explanation = get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size)
+def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None,
+                    current_contribution=0, last_raise=None, big_blind=1):
+    action, explanation = get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size,
+                                            current_contribution, last_raise, big_blind)
     print("\n===========================================")
     if hole_cards is not None and board is not None:
         hand_desc = describe_hand(hole_cards, board)
@@ -34,14 +37,54 @@ def get_pot_info(all_in=False):
     while True:
         try:
             pot_size = float(input("\nCurrent pot size: $"))
+            if not isfinite(pot_size) or pot_size < 0:
+                print("Please enter a finite, nonnegative pot size.")
+                continue
             if all_in:
                 return pot_size, 0, 0
             bet_to_call = float(input("Bet to call ($0 if none): $"))
             stack_size = float(input("Your remaining stack size ($0 if all-in): $"))
+            if not isfinite(bet_to_call) or not isfinite(stack_size) or bet_to_call < 0 or stack_size < 0:
+                print("Please enter finite, nonnegative bet and stack amounts.")
+                continue
             return pot_size, bet_to_call, stack_size
         except ValueError:
             print("Please enter a valid number.")
-            
+
+def get_money_input(prompt, minimum=0, maximum=None):
+    while True:
+        try:
+            amount = float(input(prompt))
+            if not isfinite(amount) or amount < minimum or (maximum is not None and amount > maximum):
+                print("Please enter an amount within the allowed range.")
+                continue
+            return round(amount, 2)
+        except ValueError:
+            print("Please enter a valid number.")
+
+def get_betting_info(bet_to_call, big_blind, current_contribution=None):
+    if current_contribution is None:
+        current_contribution = get_money_input("Your chips already committed this street (including blinds): $")
+    current_bet = round(current_contribution + bet_to_call, 2)
+    last_raise = big_blind
+    if current_bet > big_blind:
+        last_raise = get_money_input("Last full bet/raise increment (exclude short all-ins): $", big_blind, current_bet)
+    return current_contribution, last_raise
+
+def get_raise_amount(current_bet, current_contribution, stack_size, last_raise, big_blind):
+    minimum = min_raise(current_bet, 0, last_raise, big_blind)
+    maximum = round(current_contribution + stack_size, 2)
+    print(f"  Minimum bet/raise to ${minimum} total this street; all-in total ${maximum}.")
+    while True:
+        amount = get_money_input("Your bet/raise to (total this street): $", 0, maximum)
+        if amount <= current_bet:
+            print("A raise must exceed the current wager.")
+            continue
+        if amount < minimum and amount != maximum:
+            print(f"Raise to at least ${minimum}, or put in your entire stack.")
+            continue
+        return amount
+
 def get_player_action(recommendation, bet_to_call=0, stack_size=None, can_raise=True):
     valid_actions = ["fold", "call", "raise", "check"]
     while True:
@@ -259,7 +302,7 @@ def ask_action_reopened():
 def run_betting_round(street_label, num_players, known_opponents, dead_cards, used_cards,
                        player_hand, board, is_all_in, prev_pot, prev_stack,
                        show_projections=False, skip_first_folds_before=False,
-                       active_positions=None, position=None):
+                       active_positions=None, position=None, big_blind=1):
     """
     Runs the user's decision(s) for a single street.
 
@@ -336,15 +379,20 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 "equity": equity, "action": action, "player_action": player_action,
             }
 
+        current_contribution, last_raise = get_betting_info(bet_to_call, big_blind)
         if show_projections:
             projections, base_equity = project_next_street(
                 player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
             )
-            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity)
+            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity,
+                                     current_contribution, last_raise, big_blind)
         else:
-            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
+            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board,
+                                     current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind)
 
         player_action = get_player_action(action, bet_to_call, stack_size)
+        if player_action == "raise":
+            get_raise_amount(current_contribution + bet_to_call, current_contribution, stack_size, last_raise, big_blind)
         if player_action == "fold":
             return {
                 "status": "folded", "num_players": num_players, "known_opponents": known_opponents,
@@ -383,6 +431,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     action = ""
     player_action = ""
 
+    big_blind = get_money_input("Big blind size: $", 0.01)
     position, position_label = get_position(num_players)
     table_size = num_players
     active_positions = list(range(1, table_size + 1))
@@ -436,7 +485,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
             street_label, num_players, known_opponents, dead_cards, used_cards,
             player_hand, board, is_all_in, prev_pot, prev_stack,
             show_projections=show_projections, skip_first_folds_before=skip_first_folds_before,
-            active_positions=active_positions, position=position,
+            active_positions=active_positions, position=position, big_blind=big_blind,
         )
         num_players = result["num_players"]
         known_opponents = result["known_opponents"]
@@ -628,18 +677,14 @@ def main():
                     print("Please enter y or n.")
 
             if not won_by_fold:
-                while True:
-                    try:
-                        pot_size = float(input("\nCurrent pot size: $"))
-                        bet_to_call = float(input("Bet to call ($0 if none): $"))
-                        stack_size = float(input("Your remaining stack size: $"))
-                        break
-                    except ValueError:
-                        print("Please enter a valid number.")
+                pot_size, bet_to_call, stack_size = get_pot_info()
+                big_blind = get_money_input("Big blind size: $", 0.01)
+                current_contribution, last_raise = get_betting_info(bet_to_call, big_blind)
 
                 print("\nRunning simulation...")
                 equity, tie_rate = calculate_equity(player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards)
-                display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board)
+                display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board,
+                                 current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind)
 
         again = input("\nPlay another hand? (y/n): ").lower().strip()
         if again != 'y':

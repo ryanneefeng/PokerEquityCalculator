@@ -10,8 +10,8 @@ from src.deck import Card
 
 def test_button_can_reach_flop_after_an_opponent_folds():
     hand = [Card("A", "Hearts"), Card("K", "Diamonds")]
-    inputs = ['6', 'n', '100', '20', '500', 'call', 'y', '1', '1', 'n', 'n',
-              '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '200', '0', '480', 'fold']
+    inputs = ['1', '6', 'n', '100', '20', '500', '0', '20', 'call', 'y', '1', '1', 'n', 'n',
+              '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '200', '0', '480', '0', 'fold']
     output = io.StringIO()
     with patch('builtins.input', side_effect=inputs), redirect_stdout(output), \
          patch('main.calculate_equity', return_value=(0.5, 0)) as calculation, \
@@ -25,7 +25,7 @@ def test_button_can_reach_flop_after_an_opponent_folds():
 def test_single_mode_shown_folder_is_removed_from_simulation():
     inputs = ['1', '3', 'A Hearts', 'K Diamonds', '5', '2 Hearts', '3 Diamonds',
               '7 Clubs', '8 Spades', '9 Hearts', 'y', '1', '4 Spades', '5 Spades',
-              '100', '10', '500', 'n']
+              '100', '10', '500', '1', '0', '10', 'n']
     with patch('builtins.input', side_effect=inputs), redirect_stdout(io.StringIO()), \
          patch('main.calculate_equity', return_value=(0.5, 0)) as calculation:
         main.main()
@@ -34,7 +34,7 @@ def test_single_mode_shown_folder_is_removed_from_simulation():
 
 def test_single_mode_multiple_shown_folders_are_removed():
     inputs = ['1', '4', 'A Hearts', 'K Diamonds', '0', 'y', '2',
-              '4 Spades', '5 Spades', '6 Clubs', '7 Clubs', '100', '10', '500', 'n']
+              '4 Spades', '5 Spades', '6 Clubs', '7 Clubs', '100', '10', '500', '1', '0', '10', 'n']
     with patch('builtins.input', side_effect=inputs), redirect_stdout(io.StringIO()), \
          patch('main.calculate_equity', return_value=(0.5, 0)) as calculation:
         main.main()
@@ -85,7 +85,7 @@ def test_all_in_flop_still_displays_best_five():
 
 def test_preflop_all_in_can_run_through_every_street():
     hand = [Card("A", "Hearts"), Card("K", "Diamonds")]
-    inputs = ['1', '100', '0', '0', 'n',
+    inputs = ['1', '1', '100', '0', '0', 'n',
               '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '100', 'n',
               '', '8 Spades', 'n', '100', 'n',
               '', '9 Hearts', 'n', '100', 'n', 'y']
