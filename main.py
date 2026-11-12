@@ -298,11 +298,12 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
 
         if is_all_in:
             hand_desc = describe_hand(player_hand, board)
-            best_cards = best_hand_cards(player_hand + board)
-            best_str = ", ".join(str(c) for c in best_cards)
             print("\n===========================================")
             print(f"  Hand:       {hand_desc}")
-            print(f"  Best 5:     {best_str}")
+            if len(board) >= 3:
+                best_cards = best_hand_cards(player_hand + board)
+                best_str = ", ".join(str(c) for c in best_cards)
+                print(f"  Best 5:     {best_str}")
             print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
             print("===========================================")
             # No more decisions once you're all-in, but others can still
