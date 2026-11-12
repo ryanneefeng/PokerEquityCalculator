@@ -8,13 +8,12 @@ def min_raise(bet_to_call, raise_amount):
     return max(raise_amount, minimum)
 
 def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
-    total_pot = pot_size + bet_to_call
-    effective_equity = equity + (tie_rate / 2)
-
-    if tie_rate >= 0.90:
-        return "Check or Call", f"The best hand is on the board. Likely a chop pot - equity {equity*100:.1f}%, tie rate {tie_rate*100:.1f}%"
+    call_amount = min(bet_to_call, stack_size)
+    total_pot = pot_size + call_amount
     
     if bet_to_call == 0:
+        if tie_rate == 1:
+            return "Check", f"A split pot is certain in the simulation. Equity {equity*100:.1f}%"
         if equity >= 0.85:
             raise_amount, is_all_in = cap_raise(min_raise(0, min(round(pot_size * 0.75, 2), round(stack_size * 0.80, 2))), stack_size)
             label = "All-In" if (is_all_in and equity >= 0.65) else f"${raise_amount}"
@@ -32,14 +31,19 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         else:
             return "Check", f"Equity {equity*100:.1f}%"
 
+    pot_odds = call_amount / total_pot
+
     # ALL-IN
     if bet_to_call >= stack_size:
-        if effective_equity >= 0.40:
-            return "Call (All-In)", f"Equity {equity*100:.1f}% with tie rate {tie_rate*100:.1f}%. Call all-in of ${bet_to_call}"
+        if equity >= pot_odds:
+            return "Call (All-In)", f"Equity {equity*100:.1f}% meets pot odds {pot_odds*100:.1f}%. Call all-in of ${call_amount}"
         else:
-            return "Fold", f"Equity {equity*100:.1f}% with tie rate {tie_rate*100:.1f}%. Fold against all-in of ${bet_to_call}"
-    
-    pot_odds = bet_to_call / total_pot
+            return "Fold", f"Equity {equity*100:.1f}% below pot odds {pot_odds*100:.1f}%. Fold against all-in of ${call_amount}"
+
+    if equity < pot_odds:
+        return "Fold", f"Equity {equity*100:.1f}% below pot odds {pot_odds*100:.1f}%"
+    if tie_rate == 1:
+        return "Call", f"A split pot is certain in the simulation. Equity {equity*100:.1f}% meets pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}"
 
     #Equity override
     if equity >= 0.75:
@@ -51,18 +55,13 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size):
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% is strong regardless of pot odds. Raise to {label} total"
 
-    if equity >= 0.55 and effective_equity >= pot_odds + 0.20:
+    if equity >= 0.55 and equity >= pot_odds + 0.20:
         raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.60, 2), round(stack_size * 0.30, 2))), stack_size)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise", f"Equity {equity*100:.1f}% far exceeds pot odds {pot_odds*100:.1f}%. Raise to {label} total"
-    elif equity >= 0.45 and effective_equity >= pot_odds + 0.10:
+    elif equity >= 0.45 and equity >= pot_odds + 0.10:
         raise_amount, is_all_in = cap_raise(min_raise(bet_to_call, min(round(pot_size * 0.35, 2), round(stack_size * 0.20, 2))), stack_size)
         label = "All-In" if is_all_in else f"${raise_amount}"
         return "Raise Small or Call", f"Equity {equity*100:.1f}% beats pot odds {pot_odds*100:.1f}%. Raise to {label} total or just call ${bet_to_call}"
-    elif equity >= 0.30 and effective_equity >= pot_odds:
-        return "Call", f"Equity {equity*100:.1f}% beats pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}"
-    elif equity >= 0.20 and effective_equity >= pot_odds - 0.12:
-        return "Call or Fold", f"Equity {equity*100:.1f}% close to pot odds {pot_odds*100:.1f}%. Call ${bet_to_call} or fold"
     else:
-        return "Fold", f"Equity {equity*100:.1f}% well below pot odds {pot_odds*100:.1f}%"
-    
+        return "Call", f"Equity {equity*100:.1f}% meets pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}"

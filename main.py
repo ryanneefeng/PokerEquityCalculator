@@ -70,7 +70,28 @@ def get_player_action(recommendation):
                 print(f"You chose to {action} instead of the recommended action: {recommendation}. I hope luck is on your side!")
         return action
 
-def handle_folds_before(num_players, known_opponents, dead_cards, used_cards):
+def remove_folded_positions(num_folded, active_positions, position):
+    if active_positions is None:
+        return
+    if num_folded == len(active_positions) - 1:
+        active_positions[:] = [position]
+        return
+
+    for i in range(num_folded):
+        while True:
+            available = [p for p in active_positions if p != position]
+            print(f"  Active opponent seats: {', '.join(str(p) for p in available)}")
+            try:
+                folded_position = int(input(f"Seat number of folded player {i + 1}: "))
+                if folded_position not in available:
+                    print("Please enter an active opponent's seat number.")
+                    continue
+                active_positions.remove(folded_position)
+                break
+            except ValueError:
+                print("Please enter a valid number.")
+
+def handle_folds_before(num_players, known_opponents, dead_cards, used_cards, active_positions=None, position=None):
     while True:
         folded = input("\nDid anyone fold or reveal cards before your turn this street? (y/n): ").lower().strip()
         if folded in ["y", "n"]:
@@ -90,6 +111,7 @@ def handle_folds_before(num_players, known_opponents, dead_cards, used_cards):
         except ValueError:
             print("Please enter a valid number.")
 
+    remove_folded_positions(num_folded, active_positions, position)
     num_players -= num_folded
 
     if num_players == 1:
@@ -124,7 +146,7 @@ def handle_folds_before(num_players, known_opponents, dead_cards, used_cards):
 
     return num_players, known_opponents, dead_cards
 
-def handle_folds(num_players, known_opponents, dead_cards, used_cards):
+def handle_folds(num_players, known_opponents, dead_cards, used_cards, active_positions=None, position=None):
     while True:
         folded = input("\nDid anyone fold this round? (y/n): ").lower().strip()
         if folded in ["y", "n"]:
@@ -144,6 +166,7 @@ def handle_folds(num_players, known_opponents, dead_cards, used_cards):
         except ValueError:
             print("Please enter a valid number.")
 
+    remove_folded_positions(num_folded, active_positions, position)
     num_players -= num_folded
 
     # If everyone else folded, no need to ask about shown cards
@@ -223,7 +246,8 @@ def ask_action_reopened():
 
 def run_betting_round(street_label, num_players, known_opponents, dead_cards, used_cards,
                        player_hand, board, is_all_in, prev_pot, prev_stack,
-                       show_projections=False, skip_first_folds_before=False):
+                       show_projections=False, skip_first_folds_before=False,
+                       active_positions=None, position=None):
     """
     Runs the user's decision(s) for a single street.
 
@@ -242,7 +266,7 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
     while True:
         if not (skip_first_folds_before and not reopened):
             num_players, known_opponents, dead_cards = handle_folds_before(
-                num_players, known_opponents, dead_cards, used_cards
+                num_players, known_opponents, dead_cards, used_cards, active_positions, position
             )
             if num_players == 1:
                 return {
@@ -274,17 +298,18 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
 
         if is_all_in:
             hand_desc = describe_hand(player_hand, board)
-            best_cards = best_hand_cards(player_hand + board)
-            best_str = ", ".join(str(c) for c in best_cards)
             print("\n===========================================")
             print(f"  Hand:       {hand_desc}")
-            print(f"  Best 5:     {best_str}")
+            if len(board) >= 3:
+                best_cards = best_hand_cards(player_hand + board)
+                best_str = ", ".join(str(c) for c in best_cards)
+                print(f"  Best 5:     {best_str}")
             print(f"  Equity:     {equity * 100:.1f}% (you are all-in)")
             print("===========================================")
             # No more decisions once you're all-in, but others can still
             # fold among themselves before the next card is dealt.
             num_players, known_opponents, dead_cards = handle_folds(
-                num_players, known_opponents, dead_cards, used_cards
+                num_players, known_opponents, dead_cards, used_cards, active_positions, position
             )
             if num_players == 1:
                 return {
@@ -315,7 +340,7 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 "equity": equity, "action": action, "player_action": player_action,
             }
 
-        num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards)
+        num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards, active_positions, position)
         if num_players == 1:
             return {
                 "status": "won_by_fold", "num_players": num_players, "known_opponents": known_opponents,
@@ -347,13 +372,15 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     player_action = ""
 
     position, position_label = get_position(num_players)
+    table_size = num_players
+    active_positions = list(range(1, table_size + 1))
 
     prev_pot = None
     prev_stack = None
 
     print("\n-- PRE-FLOP --")
     print(f"  Position: {position_label}")
-    display_acting_order(num_players, position, "preflop")
+    display_acting_order(table_size, position, "preflop", active_positions)
 
     if position == 1:
         print("  You are the Small Blind -- you must post the small blind before action begins.")
@@ -362,7 +389,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     else:
         print("  You are not a blind -- you can fold, call, or raise freely.")
 
-    preflop_order = get_acting_order(num_players, position, "preflop")
+    preflop_order = get_acting_order(table_size, position, "preflop", active_positions)
     your_preflop_index = preflop_order.index(position)
 
     streets = [
@@ -379,24 +406,25 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
             flop = [get_card_input(f"Flop card {i + 1}: ", used_cards) for i in range(3)]
             board = flop
             print("\n-- FLOP --")
-            display_acting_order(num_players, position, "postflop")
+            display_acting_order(table_size, position, "postflop", active_positions)
         elif street_label == "Turn":
             input("Press Enter to continue to the Turn...")
             turn = get_card_input("\nTurn card: ", used_cards)
             board = board + [turn]
             print("\n-- TURN --")
-            display_acting_order(num_players, position, "postflop")
+            display_acting_order(table_size, position, "postflop", active_positions)
         elif street_label == "River":
             input("Press Enter to continue to the River...")
             river = get_card_input("\nRiver card: ", used_cards)
             board = board + [river]
             print("\n-- RIVER --")
-            display_acting_order(num_players, position, "postflop")
+            display_acting_order(table_size, position, "postflop", active_positions)
 
         result = run_betting_round(
             street_label, num_players, known_opponents, dead_cards, used_cards,
             player_hand, board, is_all_in, prev_pot, prev_stack,
             show_projections=show_projections, skip_first_folds_before=skip_first_folds_before,
+            active_positions=active_positions, position=position,
         )
         num_players = result["num_players"]
         known_opponents = result["known_opponents"]
@@ -452,28 +480,32 @@ def get_card_input(prompt, used_cards=None):
         except ValueError as e:
             print(f"Error: {e}. Please try again.")
 
-def get_acting_order(num_players, position, street):
+def get_acting_order(num_players, position, street, active_positions=None):
     positions = list(range(1, num_players + 1))
     if street == "preflop":
         # UTG first, blinds last
         order = positions[2:] + positions[:2]
     else:
         # SB first, dealer last
-        order = positions
+        order = [2, 1] if num_players == 2 else positions
+    if active_positions is not None:
+        order = [p for p in order if p in active_positions]
     return order
 
-def display_acting_order(num_players, position, street):
-    order = get_acting_order(num_players, position, street)
+def display_acting_order(num_players, position, street, active_positions=None):
+    order = get_acting_order(num_players, position, street, active_positions)
     position_labels = {1: "SB", 2: "BB", 3: "UTG", num_players: "Dealer"}
+    if num_players == 2:
+        position_labels = {1: "SB/Dealer", 2: "BB"}
     if num_players >= 5:
         position_labels[num_players - 1] = "Cutoff"
     for i in range(4, num_players - 1 if num_players >= 5 else num_players):
         position_labels[i] = f"UTG+{i-3}"
 
-    order_str = " → ".join([position_labels.get(p, str(p)) + (" (YOU)" if p == position else "") for p in order])
+    order_str = " → ".join([position_labels.get(p, str(p)) + f" [seat {p}]" + (" (YOU)" if p == position else "") for p in order])
     acting_index = order.index(position) + 1
     print(f"  Acting order: {order_str}")
-    print(f"  You act {acting_index} of {num_players}")
+    print(f"  You act {acting_index} of {len(order)}")
 
 def main():
     while True:
@@ -570,6 +602,7 @@ def main():
                         won_by_fold = True
                         break
 
+                    num_players -= num_revealed
                     for i in range(num_revealed):
                         print(f"\nEnter the 2 cards for player {i + 1} who revealed:")
                         card1 = get_card_input("Card 1: ", used_cards)

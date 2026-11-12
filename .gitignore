@@ -3,3 +3,7 @@ __pycache__/
 *.pyo
 session.json
 session.db
+
+# Local audit reports and reproduction scripts
+/audits/
+/POKER_AUDIT.md
