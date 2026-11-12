@@ -40,22 +40,23 @@ def exact_equity_river(player_hand, board, num_players, known_opponents, dead_ca
 
         your_best = best_hand(player_hand + board)
         you_win = True
-        you_tie = False
+        tied_players = 1
 
         for opponent_hand in opponents:
             opp_best = best_hand(opponent_hand + board)
             if opp_best > your_best:
                 you_win = False
-                you_tie = False
+                tied_players = 0
                 break
             elif opp_best == your_best:
                 you_win = False
-                you_tie = True
+                tied_players += 1
 
         if you_win:
             wins += 1
-        elif you_tie:
+        elif tied_players > 1:
             ties += 1
+            wins += 1 / tied_players
         total += 1
 
     if total == 0:
@@ -103,22 +104,23 @@ def exact_equity_turn(player_hand, board, num_players, known_opponents, dead_car
 
             your_best = best_hand(player_hand + full_board)
             you_win = True
-            you_tie = False
+            tied_players = 1
 
             for opponent_hand in opponents:
                 opp_best = best_hand(opponent_hand + full_board)
                 if opp_best > your_best:
                     you_win = False
-                    you_tie = False
+                    tied_players = 0
                     break
                 elif opp_best == your_best:
                     you_win = False
-                    you_tie = True
+                    tied_players += 1
 
             if you_win:
                 wins += 1
-            elif you_tie:
+            elif tied_players > 1:
                 ties += 1
+                wins += 1 / tied_players
             total += 1
 
     if total == 0:
@@ -178,25 +180,27 @@ def monte_carlo_equity(player_hand, board, num_players, known_opponents, dead_ca
         your_best = best_hand(player_hand + simulated_board)
 
         you_win = True
-        you_tie = False
+        tied_players = 1
         for opponent_hand in opponents:
             opp_best = best_hand(opponent_hand + simulated_board)
             if opp_best > your_best:
                 you_win = False
-                you_tie = False
+                tied_players = 0
                 break
             elif opp_best == your_best:
                 you_win = False
-                you_tie = True
+                tied_players += 1
 
         if you_win:
             wins += 1
-        elif you_tie:
+        elif tied_players > 1:
             ties += 1
+            wins += 1 / tied_players
 
     return wins / simulations, ties / simulations
 
 def calculate_equity(player_hand, board, num_players, known_opponents=None, dead_cards=None, simulations=10000):
+    # Equity includes your share of tied pots; tie rate counts how often you split.
     if known_opponents is None:
         known_opponents = []
     if dead_cards is None:

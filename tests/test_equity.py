@@ -33,7 +33,8 @@ def test_tie_rate_heads_up_identical_board():
     player_hand = make_cards([("2", "Hearts"), ("3", "Diamonds")])
     board = make_cards([("A", "Clubs"), ("A", "Hearts"), ("A", "Spades"), ("A", "Diamonds"), ("K", "Clubs")])
     equity, tie_rate = calculate_equity(player_hand, board, 2, simulations=500)
-    assert tie_rate > 0.0
+    assert equity == 0.5
+    assert tie_rate == 1.0
 
 def test_dead_cards_reduce_equity():
     # Player has J-J, but two more Jacks are dead -- trips become much less likely
@@ -115,3 +116,40 @@ def test_exact_equity_wheel_loses_to_six_high():
     equity, tie_rate = calculate_equity(player_hand, board, 2, known_opponents=opponent_hand)
     assert equity == 0.0
     assert tie_rate == 0.0
+
+def test_three_way_board_split_counts_one_third():
+    player_hand = make_cards([("2", "Hearts"), ("3", "Diamonds")])
+    board = make_cards([("A", "Hearts"), ("K", "Hearts"), ("Q", "Hearts"), ("J", "Hearts"), ("10", "Hearts")])
+    equity, tie_rate = calculate_equity(player_hand, board, 3, simulations=50)
+    assert abs(equity - 1 / 3) < 0.000001
+    assert tie_rate == 1.0
+
+def test_three_players_only_two_share_the_pot():
+    player_hand = make_cards([("A", "Hearts"), ("K", "Diamonds")])
+    opponents = [
+        make_cards([("A", "Clubs"), ("K", "Spades")]),
+        make_cards([("Q", "Clubs"), ("J", "Clubs")])
+    ]
+    board = make_cards([("2", "Hearts"), ("3", "Diamonds"), ("7", "Clubs"), ("8", "Spades"), ("9", "Hearts")])
+    equity, tie_rate = calculate_equity(player_hand, board, 3, known_opponents=opponents, simulations=10)
+    assert equity == 0.5
+    assert tie_rate == 1.0
+
+def test_matching_one_opponent_does_not_count_when_another_wins():
+    player_hand = make_cards([("A", "Hearts"), ("K", "Diamonds")])
+    opponents = [
+        make_cards([("A", "Clubs"), ("K", "Spades")]),
+        make_cards([("10", "Clubs"), ("J", "Clubs")])
+    ]
+    board = make_cards([("2", "Hearts"), ("3", "Diamonds"), ("7", "Clubs"), ("8", "Spades"), ("9", "Hearts")])
+    equity, tie_rate = calculate_equity(player_hand, board, 3, known_opponents=opponents, simulations=10)
+    assert equity == 0.0
+    assert tie_rate == 0.0
+
+def test_exact_turn_equity_includes_split_share():
+    player_hand = make_cards([("K", "Clubs"), ("2", "Diamonds")])
+    opponents = [make_cards([("K", "Diamonds"), ("3", "Spades")])]
+    board = make_cards([("A", "Hearts"), ("A", "Diamonds"), ("A", "Clubs"), ("A", "Spades")])
+    equity, tie_rate = calculate_equity(player_hand, board, 2, known_opponents=opponents)
+    assert equity == 0.5
+    assert tie_rate == 1.0
