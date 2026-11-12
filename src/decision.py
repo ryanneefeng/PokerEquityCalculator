@@ -6,18 +6,20 @@ def cap_raise(raise_amount, stack_size):
 def min_raise(current_bet, raise_amount, last_raise=None, big_blind=1):
     if last_raise is None:
         last_raise = max(current_bet, big_blind)
-    minimum = current_bet + max(last_raise, big_blind)
+    minimum = round(current_bet + max(last_raise, big_blind), 2)
     return max(raise_amount, minimum)
 
 def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size,
-                       current_contribution=0, last_raise=None, big_blind=1):
+                       current_contribution=0, last_raise=None, big_blind=1, can_raise=True):
     call_amount = min(bet_to_call, stack_size)
     total_pot = pot_size + call_amount
-    current_bet = current_contribution + bet_to_call
+    current_bet = round(current_contribution + bet_to_call, 2)
     minimum_raise = min_raise(current_bet, 0, last_raise, big_blind)
-    total_stack = current_contribution + stack_size
+    total_stack = round(current_contribution + stack_size, 2)
     
     if bet_to_call == 0:
+        if not can_raise:
+            return "Check", f"Equity {equity*100:.1f}%. You cannot raise on this action."
         if tie_rate == 1:
             return "Check", f"A split pot is certain in the simulation. Equity {equity*100:.1f}%"
         if equity >= 0.85:
@@ -48,6 +50,8 @@ def get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size,
 
     if equity < pot_odds:
         return "Fold", f"Equity {equity*100:.1f}% below pot odds {pot_odds*100:.1f}%"
+    if not can_raise:
+        return "Call", f"Equity {equity*100:.1f}% meets pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}; the betting has not reopened for a raise."
     if tie_rate == 1:
         return "Call", f"A split pot is certain in the simulation. Equity {equity*100:.1f}% meets pot odds {pot_odds*100:.1f}%. Call ${bet_to_call}"
 

@@ -15,9 +15,9 @@ def display_projections(projections, base_equity):
         print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f}%)")
 
 def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None,
-                    current_contribution=0, last_raise=None, big_blind=1):
+                    current_contribution=0, last_raise=None, big_blind=1, can_raise=True):
     action, explanation = get_recommendation(equity, tie_rate, pot_size, bet_to_call, stack_size,
-                                            current_contribution, last_raise, big_blind)
+                                            current_contribution, last_raise, big_blind, can_raise)
     print("\n===========================================")
     if hole_cards is not None and board is not None:
         hand_desc = describe_hand(hole_cards, board)
@@ -33,7 +33,7 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
     print("===========================================")
     return action
 
-def get_pot_info(all_in=False):
+def get_pot_info(all_in=False, remaining_stack=None):
     while True:
         try:
             pot_size = float(input("\nCurrent pot size: $"))
@@ -41,13 +41,17 @@ def get_pot_info(all_in=False):
                 print("Please enter a finite, nonnegative pot size.")
                 continue
             if all_in:
-                return pot_size, 0, 0
+                return round(pot_size, 2), 0, 0
             bet_to_call = float(input("Bet to call ($0 if none): $"))
-            stack_size = float(input("Your remaining stack size ($0 if all-in): $"))
+            if remaining_stack is None:
+                stack_size = float(input("Your remaining stack size ($0 if all-in): $"))
+            else:
+                stack_size = remaining_stack
+                print(f"  Your remaining stack: ${stack_size}")
             if not isfinite(bet_to_call) or not isfinite(stack_size) or bet_to_call < 0 or stack_size < 0:
                 print("Please enter finite, nonnegative bet and stack amounts.")
                 continue
-            return pot_size, bet_to_call, stack_size
+            return round(pot_size, 2), round(bet_to_call, 2), round(stack_size, 2)
         except ValueError:
             print("Please enter a valid number.")
 
@@ -62,13 +66,14 @@ def get_money_input(prompt, minimum=0, maximum=None):
         except ValueError:
             print("Please enter a valid number.")
 
-def get_betting_info(bet_to_call, big_blind, current_contribution=None):
+def get_betting_info(bet_to_call, big_blind, current_contribution=None, previous_last_raise=None):
     if current_contribution is None:
         current_contribution = get_money_input("Your chips already committed this street (including blinds): $")
     current_bet = round(current_contribution + bet_to_call, 2)
     last_raise = big_blind
     if current_bet > big_blind:
-        last_raise = get_money_input("Last full bet/raise increment (exclude short all-ins): $", big_blind, current_bet)
+        minimum = max(big_blind, previous_last_raise or big_blind)
+        last_raise = get_money_input("Last full bet/raise increment (exclude short all-ins): $", minimum, current_bet)
     return current_contribution, last_raise
 
 def get_raise_amount(current_bet, current_contribution, stack_size, last_raise, big_blind):
@@ -294,7 +299,7 @@ def get_position(num_players):
 
 def ask_action_reopened():
     while True:
-        reopened = input("\nAfter your action, did a player still to act raise (reopening the betting)? (y/n): ").lower().strip()
+        reopened = input("\nAfter your action, did anyone bet or raise so you owe more chips? (y/n): ").lower().strip()
         if reopened in ["y", "n"]:
             return reopened == "y"
         print("Please enter y or n.")
@@ -306,20 +311,19 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
     """
     Runs the user's decision(s) for a single street.
 
-    A street isn't always one decision. If a player who acts after the user
-    raises, the action reopens: the pot just grew, the bet to call is new,
-    and pot odds have to be recalculated -- the user needs a fresh
-    recommendation and a real chance to act again, not stale numbers carried
-    into the next street. This loops for exactly that case, and keeps looping
-    through re-raise wars until action actually closes on the user (or
-    everyone folds, or the user is all-in and has no more decisions to make).
+    A street isn't always one decision. A later bet or raise can require
+    another call or fold, even if a short all-in does not reopen raising.
+    Keep the user's contribution so each new decision uses the extra amount
+    owed, and compare it with the last full increment to determine raising rights.
     """
     equity, tie_rate = 0.0, 0.0
     action, player_action = "", ""
-    reopened = False
+    action_returned = False
+    current_contribution = None
+    last_raise = None
 
     while True:
-        if not (skip_first_folds_before and not reopened):
+        if not (skip_first_folds_before and not action_returned):
             num_players, known_opponents, dead_cards = handle_folds_before(
                 num_players, known_opponents, dead_cards, used_cards, active_positions, position
             )
@@ -331,11 +335,15 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                     "equity": equity, "action": action, "player_action": player_action,
                 }
 
-        if reopened:
-            print(f"\n  Action reopens on the {street_label} -- a player raised after your last action.")
+        if action_returned:
+            print(f"\n  Action returns on the {street_label} -- another player bet or raised.")
             print("  Pot odds have changed, so let's get an updated read before you act again.")
 
-        pot_size, bet_to_call, stack_size = get_pot_info(all_in=is_all_in)
+        pot_size, bet_to_call, stack_size = get_pot_info(
+            all_in=is_all_in, remaining_stack=prev_stack if action_returned else None
+        )
+        if action_returned and bet_to_call == 0:
+            break
 
         if not is_all_in:
             if prev_pot is not None and pot_size < prev_pot:
@@ -379,26 +387,41 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 "equity": equity, "action": action, "player_action": player_action,
             }
 
-        current_contribution, last_raise = get_betting_info(bet_to_call, big_blind)
+        current_contribution, last_raise = get_betting_info(bet_to_call, big_blind, current_contribution, last_raise)
+        can_raise = not action_returned or bet_to_call >= last_raise
+        if not can_raise:
+            print("  The extra amount is less than a full raise. You can call or fold, but cannot raise.")
         if show_projections:
             projections, base_equity = project_next_street(
                 player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
             )
             action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity,
-                                     current_contribution, last_raise, big_blind)
+                                     current_contribution, last_raise, big_blind, can_raise)
         else:
             action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board,
-                                     current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind)
+                                     current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind, can_raise=can_raise)
 
-        player_action = get_player_action(action, bet_to_call, stack_size)
-        if player_action == "raise":
-            get_raise_amount(current_contribution + bet_to_call, current_contribution, stack_size, last_raise, big_blind)
+        player_action = get_player_action(action, bet_to_call, stack_size, can_raise)
         if player_action == "fold":
             return {
                 "status": "folded", "num_players": num_players, "known_opponents": known_opponents,
                 "dead_cards": dead_cards, "is_all_in": is_all_in, "prev_pot": prev_pot, "prev_stack": prev_stack,
                 "equity": equity, "action": action, "player_action": player_action,
             }
+
+        chips_added = 0
+        if player_action == "raise":
+            current_bet = round(current_contribution + bet_to_call, 2)
+            raise_amount = get_raise_amount(current_bet, current_contribution, stack_size, last_raise, big_blind)
+            last_raise = max(last_raise, round(raise_amount - current_bet, 2))
+            chips_added = round(raise_amount - current_contribution, 2)
+        elif player_action == "call":
+            chips_added = min(bet_to_call, stack_size)
+        current_contribution = round(current_contribution + chips_added, 2)
+        prev_pot = round(pot_size + chips_added, 2)
+        prev_stack = round(stack_size - chips_added, 2)
+        if prev_stack == 0:
+            is_all_in = True
 
         num_players, known_opponents, dead_cards = handle_folds(num_players, known_opponents, dead_cards, used_cards, active_positions, position)
         if num_players == 1:
@@ -408,9 +431,9 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 "equity": equity, "action": action, "player_action": player_action,
             }
 
-        if not ask_action_reopened():
+        if is_all_in or not ask_action_reopened():
             break
-        reopened = True
+        action_returned = True
 
     return {
         "status": "continue", "num_players": num_players, "known_opponents": known_opponents,

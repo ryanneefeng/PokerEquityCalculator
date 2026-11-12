@@ -35,6 +35,11 @@ street, and the last full bet or raise increment. Short all-ins do not change th
 increment. If you choose to raise, enter the total amount you are raising to on
 that street, including chips you already committed.
 
+After your action, report any new bet or raise that leaves more chips to call.
+The calculator asks for another decision even after a short all-in, but only
+allows raising again when the extra amount reaches a full bet or raise increment.
+Calls and raises update your contribution and remaining stack within the street.
+
 ## How It Works
 
 The program offers two modes. In single calculation mode the user inputs their hole cards, the current board state, any revealed cards from folded players, pot size, bet to call, and remaining stack. The program runs 10,000 Monte Carlo simulations and outputs an equity percentage, tie rate, and recommended action with a suggested raise amount.

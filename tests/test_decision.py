@@ -86,3 +86,20 @@ def test_recommended_short_raise_is_an_all_in():
                                             current_contribution=40, last_raise=20, big_blind=2)
     assert action == 'Raise'
     assert 'All-In' in explanation
+
+def test_strong_equity_cannot_recommend_a_raise_without_raising_rights():
+    action, explanation = get_recommendation(0.99, 0, 300, 30, 500,
+                                            current_contribution=100, last_raise=100, big_blind=2, can_raise=False)
+    assert action == 'Call'
+    assert 'has not reopened' in explanation
+
+def test_lack_of_raising_rights_does_not_force_a_bad_call():
+    action, explanation = get_recommendation(0.1, 0, 100, 50, 500, can_raise=False)
+    assert action == 'Fold'
+
+def test_no_raising_rights_with_no_bet_recommends_check():
+    action, explanation = get_recommendation(0.99, 0, 100, 0, 500, can_raise=False)
+    assert action == 'Check'
+
+def test_minimum_raise_rounds_currency_before_comparing():
+    assert min_raise(0.1, 0, last_raise=0.2, big_blind=0.05) == 0.3
