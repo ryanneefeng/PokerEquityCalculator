@@ -119,7 +119,7 @@ def test_short_all_in_requires_another_decision_without_allowing_raise():
     assert result['player_action'] == 'call'
     assert result['prev_stack'] == 870
     assert result['prev_pot'] == 460
-    assert 'Betting has not reopened for you' in output
+    assert 'Raising is not available' in output
 
 def test_full_raise_reopens_raising_and_counts_prior_call():
     inputs = ['n', '300', '100', '1000', '0', '100', 'call', 'n', 'y',
@@ -144,7 +144,7 @@ def test_check_followed_by_short_opening_only_allows_call_or_fold():
     result, output, raising_rights = run_river_actions(inputs, big_blind=100)
     assert raising_rights == [True, False]
     assert result['prev_stack'] == 480
-    assert 'Betting has not reopened for you' in output
+    assert 'Raising is not available' in output
 
 def test_first_action_keeps_raising_rights_when_facing_short_raise():
     inputs = ['n', '330', '30', '500', '100', '100', 'raise', '230', 'n', 'n']
