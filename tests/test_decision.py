@@ -103,3 +103,24 @@ def test_no_raising_rights_with_no_bet_recommends_check():
 
 def test_minimum_raise_rounds_currency_before_comparing():
     assert min_raise(0.1, 0, last_raise=0.2, big_blind=0.05) == 0.3
+
+def test_no_raise_is_recommended_against_only_all_in_opponents():
+    action, explanation = get_recommendation(0.99, 0, 100, 30, 500, opponent_limit=0)
+    assert action == 'Call'
+    assert 'no opponent' in explanation
+
+def test_effective_raise_cap_does_not_falsely_label_you_all_in():
+    action, explanation = get_recommendation(0.7, 0, 1000, 0, 1000, opponent_limit=50)
+    assert action == 'Raise'
+    assert '$50' in explanation
+    assert 'All-In' not in explanation
+
+def test_effective_raise_cap_still_obeys_minimum_raise():
+    action, explanation = get_recommendation(0.7, 0, 1000, 100, 1000,
+                                            last_raise=100, opponent_limit=150)
+    assert action == 'Raise'
+    assert '$200' in explanation
+
+def test_zero_stack_does_not_get_a_zero_dollar_call_or_raise():
+    action, explanation = get_recommendation(0.99, 0, 100, 50, 0)
+    assert action == 'No action (All-In)'
