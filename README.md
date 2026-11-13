@@ -6,7 +6,7 @@
 
 A Texas Hold'em poker equity calculator built in Python that uses Monte Carlo
 simulation to estimate a player's probability of winning a hand and recommends
-the optimal move based on pot odds, stack size, and equity. Built out of an
+a suggested move based on pot odds, stack size, and equity. Built out of an
 interest in probability and quantitative decision making.
 
 > This project is an expansion of my CS50P final project, rebuilt from scratch
@@ -24,11 +24,45 @@ interest in probability and quantitative decision making.
 - **Input Safety** - duplicate card prevention, pot and stack sanity checks between streets, and full input validation throughout
 - **Session Logging** - automatically logs every continuous mode hand to a JSON file including hole cards, board, equity, recommendation, action taken, and outcome
 - **Position Awareness** - tracks your seat position and displays acting order at each street, distinguishing between folds that occurred before and after your action so equity is calculated with accurate information
+- **Opponent Stacks** - keeps each seat's remaining chips and contributions, so all-in players stay in the hand without receiving another betting turn
+- **Main and Side Pots** - separates pots by matched contributions, retains folded money, returns uncalled wagers, and calculates your equity only in pots you can win
 
 In continuous mode, seat numbers stay fixed for the entire hand. When someone folds,
 enter their original seat number so later streets keep the correct acting order.
 In single calculation mode, shown folded players are removed from the active player
 count and their cards are kept as dead cards.
+
+Betting inputs include the big blind, your chips already committed on the current
+street, and the last full bet or raise increment. Short all-ins do not change that
+increment. If you choose to raise, enter the total amount you are raising to on
+that street, including chips you already committed.
+
+After your action, report any new bet or raise that leaves more chips to call.
+The calculator asks for another decision even after a short all-in, but only
+allows raising again when the extra amount reaches a full bet or raise increment.
+Calls and raises update your contribution and remaining stack within the street.
+
+The calculator also records the other seats' contributions and remaining stacks.
+On first entry, give each seat's current-street contribution, contributions from
+earlier streets, and remaining chips. Record antes or other dead money separately
+from bets. The pot includes all committed bets, including chips still in front of
+players. These amounts must add up to the pot you entered.
+
+After your action, update the other players up to your next decision or the end
+of the round. Later updates only need their new street totals; remaining stacks
+are calculated from the extra chips. A new opposing wager automatically returns
+action to you. The next street cannot start while a funded opponent still needs
+to call or fold. All-in players stay eligible for their pots but cannot fold or
+make additional wagers.
+
+Each displayed pot lists its eligible players. Recommendations use the money you
+can win after your call, excluding deeper side pots and uncalled excess. Overall
+equity is weighted by those eligible pot amounts. Side-pot equities reuse the
+existing exact or Monte Carlo calculations; unknown hands are still uniformly
+random. Player records keep known hands attached to seats so future range work
+can build on the same information without changing the betting structure.
+Call advice uses currently funded pots and excludes newly uncalled money expected
+to return; it does not predict additional calls or folds from other players.
 
 ## How It Works
 

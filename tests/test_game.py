@@ -10,11 +10,14 @@ from src.deck import Card
 
 def test_button_can_reach_flop_after_an_opponent_folds():
     hand = [Card("A", "Hearts"), Card("K", "Diamonds")]
-    inputs = ['6', 'n', '100', '20', '500', 'call', 'y', '1', '1', 'n', 'n',
-              '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '200', '0', '480', 'fold']
+    inputs = ['1', '6', '0', 'n', '150', '30', '500', '0',
+              '30', '0', '100', '30', '0', '100', '30', '0', '100',
+              '30', '0', '100', '30', '0', '100', '0',
+              '30', 'call', 'y', '1', '1', 'n', '30', '30', '30', '30', '30',
+              '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '180', '0', '0', '0', '0', '0', 'fold']
     output = io.StringIO()
     with patch('builtins.input', side_effect=inputs), redirect_stdout(output), \
-         patch('main.calculate_equity', return_value=(0.5, 0)) as calculation, \
+         patch('src.pots.calculate_equity', return_value=(0.5, 0)) as calculation, \
          patch('main.project_next_street', return_value=([], 0.5)), patch('main.log_hand') as log:
         main.continuous_game(6, hand, used_cards=set(hand))
     assert [call.args[2] for call in calculation.call_args_list] == [6, 5]
@@ -25,18 +28,19 @@ def test_button_can_reach_flop_after_an_opponent_folds():
 def test_single_mode_shown_folder_is_removed_from_simulation():
     inputs = ['1', '3', 'A Hearts', 'K Diamonds', '5', '2 Hearts', '3 Diamonds',
               '7 Clubs', '8 Spades', '9 Hearts', 'y', '1', '4 Spades', '5 Spades',
-              '100', '10', '500', 'n']
+              '100', '10', '500', '1', '0', '0', '30', '30', 'y', '10', '30', '500', '10', 'n']
     with patch('builtins.input', side_effect=inputs), redirect_stdout(io.StringIO()), \
-         patch('main.calculate_equity', return_value=(0.5, 0)) as calculation:
+         patch('src.pots.calculate_equity', return_value=(0.5, 0)) as calculation:
         main.main()
     assert calculation.call_args.args[2] == 2
-    assert calculation.call_args.kwargs['dead_cards'] == [Card("4", "Spades"), Card("5", "Spades")]
+    assert set(calculation.call_args.kwargs['dead_cards']) == {Card("4", "Spades"), Card("5", "Spades")}
 
 def test_single_mode_multiple_shown_folders_are_removed():
     inputs = ['1', '4', 'A Hearts', 'K Diamonds', '0', 'y', '2',
-              '4 Spades', '5 Spades', '6 Clubs', '7 Clubs', '100', '10', '500', 'n']
+              '4 Spades', '5 Spades', '6 Clubs', '7 Clubs', '100', '10', '500', '1', '0',
+              '0', '30', '15', '15', 'y', '10', '30', '500', '10', 'n']
     with patch('builtins.input', side_effect=inputs), redirect_stdout(io.StringIO()), \
-         patch('main.calculate_equity', return_value=(0.5, 0)) as calculation:
+         patch('src.pots.calculate_equity', return_value=(0.5, 0)) as calculation:
         main.main()
     assert calculation.call_args.args[2] == 2
     assert len(calculation.call_args.kwargs['dead_cards']) == 4
@@ -85,13 +89,11 @@ def test_all_in_flop_still_displays_best_five():
 
 def test_preflop_all_in_can_run_through_every_street():
     hand = [Card("A", "Hearts"), Card("K", "Diamonds")]
-    inputs = ['1', '100', '0', '0', 'n',
-              '', '2 Hearts', '3 Diamonds', '7 Clubs', 'n', '100', 'n',
-              '', '8 Spades', 'n', '100', 'n',
-              '', '9 Hearts', 'n', '100', 'n', 'y']
+    inputs = ['1', '1', '0', '100', '0', '0', '50', '0', '50', '0', '0',
+              '', '2 Hearts', '3 Diamonds', '7 Clubs', '', '8 Spades', '', '9 Hearts', 'y']
     output = io.StringIO()
     with patch('builtins.input', side_effect=inputs), redirect_stdout(output), \
-         patch('main.calculate_equity', return_value=(0.5, 0)) as calculation, \
+         patch('src.pots.calculate_equity', return_value=(0.5, 0)) as calculation, \
          patch('main.get_player_action') as action, patch('main.log_hand') as log:
         main.continuous_game(2, hand, used_cards=set(hand))
     assert [len(call.args[1]) for call in calculation.call_args_list] == [0, 3, 4, 5]
