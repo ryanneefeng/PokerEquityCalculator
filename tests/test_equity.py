@@ -70,13 +70,13 @@ def test_more_players_lowers_equity():
     equity_6, _ = calculate_equity(player_hand, board, 6, simulations=500)
     assert equity_2 > equity_6
 
-def test_exact_equity_river_valid_range():
+def test_exact_equity_river_trips_can_lose_to_straights_and_flushes():
     player_hand = make_cards([("A", "Hearts"), ("A", "Diamonds")])
     board = make_cards([("A", "Clubs"), ("K", "Hearts"), ("2", "Spades"), ("3", "Diamonds"), ("4", "Clubs")])
     equity, tie_rate = calculate_equity(player_hand, board, 2)
     assert 0.0 <= equity <= 1.0
     assert 0.0 <= tie_rate <= 1.0
-    assert equity > 0.90
+    assert 0.75 < equity < 0.90
 
 def test_exact_equity_river_valid_range():
     player_hand = make_cards([("A", "Hearts"), ("A", "Diamonds")])

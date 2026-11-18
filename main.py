@@ -5,16 +5,17 @@ from math import isfinite
 from src.evaluator import describe_hand, best_hand_cards
 from src.session import log_hand, get_stats
 from src.pots import create_players, add_chips, get_call_amount, get_opponent_limit
-from src.pots import build_side_pots, return_uncalled_chips, calculate_pot_equity, calculate_call_equity
+from src.pots import build_side_pots, return_uncalled_chips, calculate_pot_equity, calculate_call_equity, project_pot_equity
 
 def display_projections(projections, base_equity):
     if not projections:
         return
-    print("  Key cards next street:")
+    print("  Key cards next street (Monte Carlo estimates; sampling noise may affect ranking):")
+    print(f"    Sampled baseline: {base_equity*100:.1f}%")
     for card, equity in projections:
         change = equity - base_equity
         direction = "+" if change >= 0 else ""
-        print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f}%)")
+        print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f} percentage points)")
 
 def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None,
                     current_contribution=0, last_raise=None, big_blind=1, can_raise=True, opponent_limit=None, call_cost=None):
@@ -31,6 +32,8 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
             print(f"  Best 5:     {best_str}")
     print(f"  Equity:     {equity * 100:.1f}%")
     print(f"  Tie Rate:   {tie_rate * 100:.1f}%")
+    if projections and base_equity is not None:
+        display_projections(projections, base_equity)
     print(f"  Action:     {action}")
     print(f"  Reason:     {explanation}")
     print("===========================================")
@@ -542,6 +545,19 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
             )
 
+        projections, base_equity = None, None
+        if show_projections and len(board) in (3, 4):
+            if players is not None:
+                projection_result = project_pot_equity(
+                    player_hand, board, players, position, bet_to_call, dead_cards, dead_money=dead_money
+                )
+            else:
+                projection_result = project_next_street(
+                    player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
+                )
+            if projection_result:
+                projections, base_equity = projection_result
+
         if is_all_in or auto_runout:
             hand_desc = describe_hand(player_hand, board)
             print("\n===========================================")
@@ -554,6 +570,8 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
             print(f"  Equity:     {equity * 100:.1f}% ({status})")
             if pot_result is not None:
                 display_pots(pot_result, position)
+            if projections and base_equity is not None:
+                display_projections(projections, base_equity)
             print("===========================================")
             # No more decisions once you're all-in, but others can still
             # fold among themselves before the next card is dealt.
@@ -583,17 +601,11 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
             print("  No opponent has chips to contest another raise.")
         if pot_result is not None:
             display_pots(pot_result, position)
-        if show_projections and players is None:
-            projections, base_equity = project_next_street(
-                player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
-            )
-            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity,
-                                     current_contribution, last_raise, big_blind, can_raise)
-        else:
-            action = display_results(equity, tie_rate, decision_pot, bet_to_call, stack_size, player_hand, board,
-                                     current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind,
-                                     can_raise=can_raise, opponent_limit=opponent_limit,
-                                     call_cost=pot_result["call_cost"] if pot_result is not None else None)
+        action = display_results(equity, tie_rate, decision_pot, bet_to_call, stack_size, player_hand, board,
+                                 projections, base_equity, current_contribution=current_contribution,
+                                 last_raise=last_raise, big_blind=big_blind, can_raise=can_raise,
+                                 opponent_limit=opponent_limit,
+                                 call_cost=pot_result["call_cost"] if pot_result is not None else None)
 
         player_action = get_player_action(action, bet_to_call, stack_size, can_raise)
         if player_action == "fold":
@@ -956,7 +968,13 @@ def main():
                 else:
                     result = calculate_call_equity(player_hand, board, players, 1, bet_to_call, dead_cards, dead_money=dead_money)
                     display_pots(result, 1)
+                    projections, base_equity = None, None
+                    if len(board) in (3, 4):
+                        projections, base_equity = project_pot_equity(
+                            player_hand, board, players, 1, bet_to_call, dead_cards, dead_money=dead_money
+                        )
                     display_results(result["equity"], result["tie_rate"], result["decision_pot"], bet_to_call, stack_size, player_hand, board,
+                                     projections, base_equity,
                                      current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind,
                                      opponent_limit=get_opponent_limit(players, 1), call_cost=result["call_cost"])
 

@@ -18,11 +18,11 @@ interest in probability and quantitative decision making.
 - **Monte Carlo Simulation** - 10,000 simulations pre-flop and flop, exact enumeration on turn and river in heads up play for perfect accuracy. Multi-street projections always use Monte Carlo for speed.
 - **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush including ace-low straights with correct tiebreaker logic
 - **Hand Descriptor** - identifies your current hand or draw at each street and shows the exact 5 cards making your best hand
-- **Multi-Street Projection** - shows how equity shifts if specific cards hit next street, highlighting the biggest gainers and losers
+- **Multi-Street Projection** - shows estimated equity shifts for the next board card on the flop and turn in both modes, weighted by the pots you can win
 - **Decision Engine** - recommends fold, call, raise, or all-in based on pot odds, equity, and remaining stack with stack-aware raise sizing
 - **Continuous Game Mode** - follows a full hand from pre-flop through the river with live equity updates, fold tracking, dead card removal, and action logging
 - **Input Safety** - duplicate card prevention, pot and stack sanity checks between streets, and full input validation throughout
-- **Session Logging** - automatically logs every continuous mode hand to a JSON file including hole cards, board, equity, recommendation, action taken, and outcome
+- **Session Logging** - automatically logs each continuous mode hand to a local SQLite database, including hole cards, board, final equity, final recommendation/action, and whether you won any pot share
 - **Position Awareness** - tracks your seat position and displays acting order at each street, distinguishing between folds that occurred before and after your action so equity is calculated with accurate information
 - **Opponent Stacks** - keeps each seat's remaining chips and contributions, so all-in players stay in the hand without receiving another betting turn
 - **Main and Side Pots** - separates pots by matched contributions, retains folded money, returns uncalled wagers, and calculates your equity only in pots you can win
@@ -79,6 +79,31 @@ python main.py
 ```
 
 No external libraries required.
+
+## Tests
+
+```bash
+python run_tests.py
+```
+
+The standard-library runner discovers the plain test functions in `tests/`,
+uses a fixed random seed, and redirects session tests to a temporary database.
+It leaves your saved hand history untouched.
+
+Draw descriptions distinguish gutshots, open-ended draws, and double gutshots,
+including ace-low straights. Backdoor flush draws are shown only on the flop;
+made straights do not receive redundant straight-draw labels.
+
+Next-card projections use 300 Monte Carlo trials per candidate and a separate
+sampled baseline. The displayed changes are percentage points; sampling noise
+can affect their order. Projections retain known and dead card removal, assume
+the current call is paid, and weight only eligible main/side pots. They do not
+predict further betting or folds.
+
+The equity API rejects duplicate/invalid cards, invalid player and simulation
+counts, malformed hands/boards, and states with too few remaining cards.
+Direct exact-turn/river helpers support at most one unknown opponent; use
+`calculate_equity` for multiway hands so they use Monte Carlo.
 
 ## Example Session
 
