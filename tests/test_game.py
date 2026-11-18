@@ -90,7 +90,7 @@ def test_all_in_flop_still_displays_best_five():
 def test_preflop_all_in_can_run_through_every_street():
     hand = [Card("A", "Hearts"), Card("K", "Diamonds")]
     inputs = ['1', '1', '0', '100', '0', '0', '50', '0', '50', '0', '0',
-              '', '2 Hearts', '3 Diamonds', '7 Clubs', '', '8 Spades', '', '9 Hearts', 'y']
+              '', '2 Hearts', '3 Diamonds', '7 Clubs', '', '8 Spades', '', '9 Hearts', 'y', '']
     output = io.StringIO()
     with patch('builtins.input', side_effect=inputs), redirect_stdout(output), \
          patch('src.pots.calculate_equity', return_value=(0.5, 0)) as calculation, \

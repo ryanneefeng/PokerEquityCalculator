@@ -35,7 +35,7 @@ def test_invalid_card_shapes_ranks_and_suits_are_rejected():
 def test_invalid_player_counts_and_known_hands_are_rejected():
     for count in [0, 1, 11, 2.5, True]:
         rejects(lambda: calculate_equity(HAND, BOARD, count))
-    for opponents in [[BOARD[:1]], [BOARD[:3]], [BOARD[:2], BOARD[2:4]]]:
+    for opponents in [[[]], [BOARD[:3]], [BOARD[:2], BOARD[2:4]]]:
         rejects(lambda: calculate_equity(HAND, [], 2, known_opponents=opponents))
 
 
