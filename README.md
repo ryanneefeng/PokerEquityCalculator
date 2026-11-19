@@ -1,110 +1,178 @@
-﻿# Poker Hand Equity Calculator
+# Poker Hand Equity Calculator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/Status-Complete-success.svg)]()
 
-A Texas Hold'em poker equity calculator built in Python that uses Monte Carlo
-simulation to estimate a player's probability of winning a hand and recommends
-a suggested move based on pot odds, stack size, and equity. Built out of an
-interest in probability and quantitative decision making.
+A command-line Texas Hold'em equity calculator for 2-10 players, built in Python.
+It estimates your expected share of the pot, including ties, and suggests actions
+using equity, pot odds, and the recorded betting state.
 
-> This project is an expansion of my CS50P final project, rebuilt from scratch
-> with proper software architecture, object oriented design, and additional
-> features beyond the scope of the original submission.
+This project expands on my CS50P final project, rebuilt out of an interest in
+probability and quantitative decision making.
 
-## Features
+## Getting Started
 
-- **Monte Carlo Simulation** - 10,000 simulations pre-flop and flop, exact enumeration on turn and river in heads up play for perfect accuracy. Multi-street projections always use Monte Carlo for speed.
-- **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush including ace-low straights with correct tiebreaker logic
-- **Hand Descriptor** - identifies your current hand or draw at each street and shows the exact 5 cards making your best hand
-- **Multi-Street Projection** - shows estimated equity shifts for the next board card on the flop and turn in both modes, weighted by the pots you can win
-- **Decision Engine** - recommends fold, call, raise, or all-in based on pot odds, equity, and remaining stack with stack-aware raise sizing
-- **Continuous Game Mode** - follows a full hand from pre-flop through the river with live equity updates, fold tracking, dead card removal, and action logging
-- **Input Safety** - duplicate card prevention, pot and stack sanity checks between streets, and full input validation throughout
-- **Session Logging** - saves every hero decision, repeated actions on the same street, split outcomes, optional per-pot payouts, and net profit when costs and payouts are known
-- **Exposed Opponent Cards** - records one or two exposed cards by seat for live, all-in, or folded opponents; live partial hands are completed from the remaining deck
-- **Position Awareness** - tracks your seat position and displays acting order at each street, distinguishing between folds that occurred before and after your action so equity is calculated with accurate information
-- **Opponent Stacks** - keeps each seat's remaining chips and contributions, so all-in players stay in the hand without receiving another betting turn
-- **Main and Side Pots** - separates pots by matched contributions, retains folded money, returns uncalled wagers, and calculates your equity only in pots you can win
+Requires Python 3.10 or newer. No external packages are needed; the application
+and test runner use the standard library.
 
-In continuous mode, seat numbers stay fixed for the entire hand. When someone folds,
-enter their original seat number so later streets keep the correct acting order.
-In single calculation mode, shown folded players are removed from the active player
-count and their cards are kept as dead cards.
-
-Betting inputs include the big blind, your chips already committed on the current
-street, and the last full bet or raise increment. Short all-ins do not change that
-increment. If you choose to raise, enter the total amount you are raising to on
-that street, including chips you already committed.
-
-After your action, report any new bet or raise that leaves more chips to call.
-The calculator asks for another decision even after a short all-in, but only
-allows raising again when the extra amount reaches a full bet or raise increment.
-Calls and raises update your contribution and remaining stack within the street.
-
-The calculator also records the other seats' contributions and remaining stacks.
-On first entry, give each seat's current-street contribution, contributions from
-earlier streets, and remaining chips. Record antes or other dead money separately
-from bets. The pot includes all committed bets, including chips still in front of
-players. These amounts must add up to the pot you entered.
-
-After your action, update the other players up to your next decision or the end
-of the round. Later updates only need their new street totals; remaining stacks
-are calculated from the extra chips. A new opposing wager automatically returns
-action to you. The next street cannot start while a funded opponent still needs
-to call or fold. All-in players stay eligible for their pots but cannot fold or
-make additional wagers.
-
-Each displayed pot lists its eligible players. Recommendations use the money you
-can win after your call, excluding deeper side pots and uncalled excess. Overall
-equity is weighted by those eligible pot amounts. Side-pot equities reuse the
-existing exact or Monte Carlo calculations; unknown hands are still uniformly
-random. Player records keep known hands attached to seats so future range work
-can build on the same information without changing the betting structure.
-Call advice uses currently funded pots and excludes newly uncalled money expected
-to return; it does not predict additional calls or folds from other players.
-
-Type `cards` at the pot-size prompt, either fold prompt, the single-mode
-folded-and-shown prompt, or a between-street continuation prompt to record
-exposed cards. Choose the opponent's fixed seat and enter only newly revealed
-cards. Showing cards does not fold a live opponent. A folded seat's exposed
-cards stay unavailable to the board and other hands. You can enter one card
-now and the second later; unknown cards remain uniformly random.
-
-At showdown, enter `win`, `loss`, or `split` (`y`/`n` still work). For a win or
-split, optionally enter your actual payout from each eligible pot. Exclude
-returned uncalled wagers. Leave an unknown payout blank. If antes/dead money
-were entered separately, give your share of that cost or leave it unknown.
-Net profit is calculated only when both total cost and payout are known.
-Winning a small pot can still produce a negative net result for the hand.
-
-Existing `session.db` files migrate automatically without deleting hands.
-The `decisions` table stores each recommendation, action, street, board, equity,
-call amount, raise total, chips added, remaining stack, and seat snapshot.
-The `hands` table stores the outcome, costs, payouts, net profit, and pot details.
-Earlier hands retain their original summaries; their missing decision history
-and payouts cannot be reconstructed. Empty actions are excluded from follow
-rates. Hand follow rate means all recorded decisions matched advice; decision
-follow rate counts individual decisions from the new history records. Win rates
-count hands winning any pot share, including splits; profit totals show how many
-hands have complete cost/payout records.
-
-## How It Works
-
-The program offers two modes. In single calculation mode the user inputs their hole cards, the current board state, any revealed cards from folded players, pot size, bet to call, and remaining stack. The program runs 10,000 Monte Carlo simulations and outputs an equity percentage, tie rate, and recommended action with a suggested raise amount.
-
-In continuous game mode the program follows a full hand from pre-flop through the river. At each street the user enters the new board cards, pot info, and what action they took. After each street the program asks if anyone folded and whether they showed their cards. Folded players are removed from the simulation and any shown cards are treated as dead cards that cannot appear in future simulated boards or opponent hands. If all opponents fold at any point the hand ends immediately. Equity and recommendations update in real time at each street so the user can see how their position changes as the hand develops.
-
-## Installation
+The current development branch is `fix/hand-evaluation`:
 
 ```bash
-git clone https://github.com/ryanneefeng/PokerEquityCalculator.git
+git clone --branch fix/hand-evaluation https://github.com/ryanneefeng/PokerEquityCalculator.git
 cd PokerEquityCalculator
 python main.py
 ```
 
-No external libraries required.
+## Modes
+
+| Mode | Behavior |
+| --- | --- |
+| **1 - Single calculation** | Analyze one pre-flop, flop, turn, or river state, including contributions, stacks, folds, exposed cards, and eligible pots. Does not save a session hand. |
+| **2 - Full game** | Follow a hand through successive streets and repeated betting decisions, then save its history and outcome. |
+| **3 - Session stats** | View recorded hand results, recommendation follow rates, splits, and net profit where costs and payouts are known. |
+
+## Features
+
+- **Hand evaluation:** all nine hand categories, category-specific tiebreakers,
+  ace-low straights, and the best five cards from the available cards.
+- **Hand descriptions:** made hands, flush draws, flop-only backdoor flush draws,
+  open-ended straight draws, gutshots, and double gutshots.
+- **Betting state:** fixed seats, position and acting order, remaining stacks,
+  street and total contributions, folds, all-ins, and returning action after bets
+  or raises. All-in players stay eligible without receiving another betting turn.
+- **Legal actions and sizing:** reject checks facing a bet, calls with nothing
+  owed, unavailable raises, and raises below the minimum unless they are all-in.
+  Reopening rights use the recorded full raise increment.
+- **Main and side pots:** retain folded money, separate eligibility by matched
+  contributions, return uncalled wagers, and weight equity by pots you can win.
+- **Exposed cards:** track one or two cards by opponent seat, including live,
+  all-in, and folded opponents. Partial live hands receive random legal completions.
+- **Next-card projections:** show the five largest estimated equity changes on
+  the flop and turn in both modes, including all-in runouts.
+- **Session history:** save every player decision, including multiple decisions
+  on one street, plus final seat snapshots and optional payout details.
+
+## Entering a Hand
+
+Enter cards as a rank and suit, such as `A Hearts` or `10 Spades`. Input is
+case-insensitive. Ranks are `2` through `10`, `J`, `Q`, `K`, and `A`; suits are
+`Hearts`, `Diamonds`, `Clubs`, and `Spades`. Duplicate cards are rejected.
+
+Your hand requires two cards. The board contains 0, 3, 4, or 5 cards. In full game
+mode, add the flop, turn, and river when prompted.
+
+### Bets, stacks, and folds
+
+- The pot includes all committed bets, including chips still in front of players.
+  Each seat's total contributions plus separately entered antes/dead money must
+  match the entered pot.
+- Give each seat's current-street contribution, earlier contributions, and
+  remaining stack on first entry. Later updates use new street totals and debit
+  the extra chips automatically.
+- Enter the big blind and last **full** bet/raise increment. Short all-ins do not
+  lower that increment. A short raise can require another call or fold without
+  restoring the right to raise.
+- Enter a raise as the **total commitment on that street**, including chips
+  already committed. Use `raise` for an opening bet as well; a shove is a raise
+  to your full available total, or a call when your stack cannot cover the wager.
+- Seat numbers stay fixed throughout full game mode. Report the actual folded
+  seats. In single calculation mode, you are seat 1; the folded-and-shown
+  shortcut assigns folders to seats 2 onward before the remaining seat updates.
+- After acting, update opponents through your next decision or the end of the
+  round. A funded player who still owes chips must call or fold before advancing.
+
+Showing cards does not fold a player. To record one or two newly exposed cards,
+type `cards` at a pot-size prompt, either fold prompt, the single-mode
+folded-and-shown prompt, or a between-street continuation prompt:
+
+```text
+Current pot size (or 'cards' to record exposed cards): $cards
+Seat showing cards (2): 2
+How many NEW exposed cards (1-2)? 1
+Exposed card 1: A Hearts
+```
+
+You can add the second card later. Known live cards stay attached to that seat;
+a folded seat's exposed cards remain unavailable to the board and other hands.
+
+## Equity and Recommendations
+
+| Calculation | Default method |
+| --- | --- |
+| Pre-flop or flop | 10,000 Monte Carlo trials |
+| Turn or river with two players eligible for a pot | Exact enumeration of legal remaining cards |
+| Turn or river with three or more eligible players | 10,000 Monte Carlo trials |
+| Next-card projections | 300 Monte Carlo trials per candidate and a separate 300-trial baseline |
+
+Equity includes the appropriate share of tied pots. For example, a three-way
+board split gives each player one-third equity and a 100% tie rate. When several
+pots are eligible, displayed overall equity and tie rate are weighted by their
+amounts. A player contributing $50 against two $200 contributions can win the
+$150 main pot; the opponents' $300 side pot is excluded from that player's equity.
+
+Call advice uses eligible pots after the current call and the matched cost of
+calling, excluding money expected to return as uncalled. Its break-even threshold
+is `call cost / eligible pot after calling`. Raise suggestions use heuristic
+equity thresholds, pot/stack sizing, the minimum legal raise, raising rights,
+and funded opponents' capacity.
+
+Projections assume the current call is paid and hold contributions fixed. Their
+changes are **percentage points from the displayed sampled baseline**, which may
+differ from the main equity estimate. Sampling noise can affect both values and
+ranking; they do not predict future bets, calls, or folds.
+
+### Python API example
+
+One opponent has exposed an ace on the river. The unknown second card is
+uniformly distributed over the remaining legal cards:
+
+```python
+from src.deck import Card
+from src.equity import calculate_equity
+
+hero = [Card("K", "Clubs"), Card("K", "Diamonds")]
+board = [Card(rank, suit) for rank, suit in [
+    ("2", "Hearts"), ("3", "Diamonds"), ("7", "Clubs"),
+    ("8", "Spades"), ("9", "Hearts"),
+]]
+equity, tie_rate = calculate_equity(
+    hero, board, 2, known_opponents=[[Card("A", "Hearts")]]
+)
+print(f"Equity: {equity:.1%}; tie rate: {tie_rate:.1%}")
+# Equity: 93.2%; tie rate: 0.0%
+```
+
+The API validates cards, player counts, simulation counts, hand/board lengths,
+and remaining-deck capacity. Known opponents accept one or two exposed cards.
+Use `calculate_equity` for normal dispatch; direct exact-turn/river helpers
+support at most one incomplete opponent hand.
+
+## Session History and Results
+
+Full game mode saves to `session.db` in the working directory. Existing databases
+migrate automatically while preserving old hands.
+
+- **`hands`:** cards, final equity, last real action/recommendation, outcome,
+  optional costs and payouts, net profit, pot details, and final seat snapshots.
+- **`decisions`:** each decision in order, with street, board, equity,
+  recommendation, action, chips added, raise total, stack, and seat snapshot.
+
+At showdown, enter `win`, `loss`, or `split` (`y`/`n` also work). For a win or
+split, optionally enter your actual payout from each eligible pot. Exclude
+returned wagers. Leave unknown amounts blank. If antes/dead money were recorded
+separately, enter your share of that cost or leave it unknown.
+
+Net profit is payout minus your matched contributions and known ante cost. It is
+reported only when both cost and payout are known. Winning a small pot can still
+produce a net loss. Uncalled refunds count as neither winnings nor chips at risk.
+
+Statistics count a hand winning **any pot share**, including splits, as a win.
+Hand follow rate means all recorded decisions matched advice; decision follow
+rate counts individual decisions. Empty actions receive no following credit.
+Profit totals show how many hands have complete cost/payout records. Older
+summary-only hands retain their limited history; missing decisions and payouts
+cannot be reconstructed. These statistics are descriptive, not evidence that
+following the recommendations improves results.
 
 ## Tests
 
@@ -113,353 +181,54 @@ python run_tests.py
 ```
 
 The standard-library runner discovers the plain test functions in `tests/`,
-uses a fixed random seed, and redirects session tests to a temporary database.
-It leaves your saved hand history untouched.
+uses a fixed random seed, and redirects session tests to temporary databases so
+your saved history is untouched. Coverage includes hand comparisons, split
+shares, partial hands, betting legality, reopening rights, side pots, database
+migration, decision history, payouts, and CLI flows.
 
-Draw descriptions distinguish gutshots, open-ended draws, and double gutshots,
-including ace-low straights. Backdoor flush draws are shown only on the flop;
-made straights do not receive redundant straight-draw labels.
+## Scope and Limitations
 
-Next-card projections use 300 Monte Carlo trials per candidate and a separate
-sampled baseline. The displayed changes are percentage points; sampling noise
-can affect their order. Projections retain known and dead card removal, assume
-the current call is paid, and weight only eligible main/side pots. They do not
-predict further betting or folds.
+The calculator models standard 52-card Texas Hold'em with no-limit betting inputs
+and chip value as the baseline. Unknown cards are uniformly random; opponent
+ranges and action-based range updates are not implemented. Position affects
+acting order, but does not adjust the strategy heuristic.
 
-The equity API rejects duplicate/invalid cards, invalid player and simulation
-counts, malformed hands/boards, and states with too few remaining cards. Each
-known opponent may have one or two exposed cards; your own hand needs two.
-Direct exact-turn/river helpers support at most one incomplete opponent; use
-`calculate_equity` for multiway hands so they use Monte Carlo.
+Recommendations do not model future betting costs, implied or reverse implied
+odds, fold probabilities, rake, tournament ICM, or payout structure. They are
+heuristics rather than optimal-play or GTO solutions. Exact results are exact
+under the entered card assumptions; Monte Carlo results have sampling error.
 
-## Example Session
+Potential next steps include opponent ranges, a richer betting-response model,
+position-aware strategy, and higher-precision projections.
 
-### Single Calculation Mode
-```
-===========================================
-      Poker Hand Equity Calculator
-===========================================
-
-Mode:
-1 = Single calculation
-2 = Full game mode (pre-flop to river)
-3 = View session stats
-
-Select mode (1, 2, or 3): 1
-
-How many players at the table (including you)? 4
-
-Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: Q spades
-Card 2: 10 clubs
-
-How many cards are on the board?
-0 = Pre-flop, 3 = Flop, 4 = Turn, 5 = River
-Number of board cards: 3
-Board card 1: 10 diamonds
-Board card 2: 5 clubs
-Board card 3: 4 clubs
-
-Have any players revealed their cards (folded and shown)? (y/n): n
-
-Current pot size: $120
-Bet to call ($0 if none): $30
-Your remaining stack size: $500
-
-Running simulation...
-
-===========================================
-  Hand:       Pair with Backdoor Flush Draw
-  Best 5:     Q of Spades, 10 of Clubs, 10 of Diamonds, 5 of Clubs, 4 of Clubs
-  Equity:     44.1%
-  Tie Rate:   1.6%
-  Action:     Call
-  Reason:     Equity 44.1% beats pot odds 20.0%. Call $30.0
-===========================================
-
-Play another hand? (y/n): n
-
-Thanks for playing!
-```
-### Continuous Game Mode
-```
-===========================================
-      Poker Hand Equity Calculator
-===========================================
-
-Mode:
-1 = Single calculation
-2 = Full game mode (pre-flop to river)
-3 = View session stats
-
-Select mode (1, 2, or 3): 2
-
-How many players at the table (including you)? 5
-
-Enter your 2 hole cards (e.g. A Hearts, 10 Spades):
-Card 1: 8 spades
-Card 2: 8 clubs
-
-What is your seat position at the table?
-1 = Small Blind, 2 = Big Blind, 3 to 5 = UTG to Dealer
-Your position (1-5): 3
-
-You are playing from: UTG
-
--- PRE-FLOP --
-  Position: UTG
-  Acting order: UTG (YOU) → Cutoff → Dealer → SB → BB
-  You act 1 of 5
-  You are not a blind -- you can fold, call, or raise freely.
-
-Current pot size: $60
-Bet to call ($0 if none): $40
-Your remaining stack size ($0 if all-in): $500 
-
-===========================================
-  Hand:       Pocket 8s
-  Equity:     23.9%
-  Tie Rate:   1.0%
-  Action:     Fold
-  Reason:     Equity 23.9% well below pot odds 40.0%
-===========================================
-
-What did you do? (fold, call, raise, check): call
-Risky call. I hope luck is on your side!
-
-Did anyone fold this round? (y/n): n
-Press Enter to continue to the Flop...
-
-Enter the 3 Flop cards:
-Flop card 1: A hearts
-Flop card 2: 10 diamonds
-Flop card 3: 8 diamonds
-
--- FLOP --
-  Acting order: SB → BB → UTG (YOU) → Cutoff → Dealer
-  You act 3 of 5
-
-Current pot size: $300
-Bet to call ($0 if none): $60
-Your remaining stack size ($0 if all-in): $460
-
-Did anyone fold or reveal cards before your turn this street? (y/n): n
-
-===========================================
-  Hand:       Three of a Kind
-  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 10 of Diamonds, 8 of Diamonds
-  Equity:     73.6%
-  Tie Rate:   0.1%
-  Key cards next street:
-    8 of Hearts -> 100.0% (+25.3%)
-    9 of Diamonds -> 51.0% (-23.7%)
-    J of Diamonds -> 51.7% (-23.0%)
-    7 of Diamonds -> 53.0% (-21.7%)
-    Q of Diamonds -> 54.0% (-20.7%)
-  Action:     Raise
-  Reason:     Equity 73.6% is strong regardless of pot odds. Raise to $138.0 total
-===========================================
-
-What did you do? (fold, call, raise, check): raise
-
-Did anyone fold this round? (y/n): y
-How many players folded? 1
-Did any of them show their hand? (y/n): n
-Press Enter to continue to the Turn...
-
-Turn card: A spades
-
--- TURN --
-  Acting order: SB → BB → UTG (YOU) → Dealer
-  You act 3 of 4
-
-Current pot size: $650
-Bet to call ($0 if none): $75 
-Your remaining stack size ($0 if all-in): $322
-
-Did anyone fold or reveal cards before your turn this street? (y/n): y
-How many players folded? 1
-Did any of them show their hand? (y/n): y
-
-Enter the 2 cards for the player who showed hand 1:
-Card 1: J spades
-Card 2: 4 clubs
-
-===========================================
-  Hand:       Full House
-  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 8 of Diamonds, A of Spades
-  Equity:     91.9%
-  Tie Rate:   0.3%
-  Key cards next street:
-    A of Clubs -> 57.3% (-32.3%)
-    A of Diamonds -> 61.0% (-28.7%)
-    10 of Spades -> 63.7% (-26.0%)
-    10 of Clubs -> 68.3% (-21.3%)
-    10 of Hearts -> 68.7% (-21.0%)
-  Action:     Raise (All-In consideration)
-  Reason:     Equity 91.9% is dominant. Raise to $257.6 total
-===========================================
-
-What did you do? (fold, call, raise, check): raise
-
-Did anyone fold this round? (y/n): n
-Press Enter to continue to the River...
-
-River card: J hearts
-
--- RIVER --
-  Acting order: SB → BB → Dealer (YOU)
-  You act 3 of 3
-
-Current pot size: $1100
-Bet to call ($0 if none): $75
-Your remaining stack size ($0 if all-in): $175
-
-Did anyone fold or reveal cards before your turn this street? (y/n): n
-
-===========================================
-  Hand:       Full House
-  Best 5:     8 of Spades, 8 of Clubs, A of Hearts, 8 of Diamonds, A of Spades
-  Equity:     96.5%
-  Tie Rate:   0.0%
-  Action:     Raise (All-In consideration)
-  Reason:     Equity 96.5% is dominant. Raise to $150.0 total
-===========================================
-
-What did you do? (fold, call, raise, check): raise
-
-Did you win this hand? (y/n): y
-
-Hand complete!
-Hand logged.
-
-Play another hand? (y/n): n
-
-Thanks for playing!
-```
-### Session Stats Mode
-```
-===========================================
-      Poker Hand Equity Calculator
-===========================================
-
-Mode:
-1 = Single calculation
-2 = Full game mode (pre-flop to river)
-3 = View session stats
-
-Select mode (1, 2, or 3): 3
-
-===========================================
-           Session Statistics
-===========================================
-  Total hands played:       6
-  Wins:                     3
-  Win rate:                 50.0%
-  Average final equity:     49.5%
-  Followed recommendation:  66.7%
-  Win rate when followed:   50.0%
-  Win rate when deviated:   50.0%
-===========================================
-
-Play another hand? (y/n): n
-
-Thanks for playing!
-```
 ## Project Structure
-```
+
+```text
 PokerEquityCalculator/
-│
-├── src/
-│   ├── deck.py        # Card and Deck classes
-│   ├── evaluator.py   # Hand evaluation and best hand logic
-│   ├── equity.py      # Monte Carlo equity simulation
-│   ├── decision.py    # Pot odds and recommendation engine
-│   └── session.py     # Session logging and statistics
-│
-├── tests/
-│   ├── test_evaluator.py
-│   ├── test_equity.py
-│   └── test_session.py
-│   └── test_position.py
-│
-├── main.py            # Entry point and user input handling
-├── README.md
-├── LICENSE
-├── .gitignore
-└── requirements.txt
+|-- main.py          # CLI, input validation, and hand flow
+|-- run_tests.py     # Standard-library test runner
+|-- src/
+|   |-- deck.py      # Cards and deck operations
+|   |-- evaluator.py # Hand comparisons, best five, and descriptions
+|   |-- equity.py    # Exact/Monte Carlo equity and projections
+|   |-- pots.py      # Contributions, refunds, eligibility, and pot equity
+|   |-- decision.py  # Pot odds and action/sizing heuristics
+|   `-- session.py   # SQLite migration, history, and statistics
+|-- tests/           # Regression and CLI-flow tests
+|-- requirements.txt # Empty: no external dependencies
+|-- README.md
+`-- LICENSE
 ```
 
-## Files
+## AI Usage
 
-### src/deck.py
-Defines the `Card` and `Deck` classes. Each card is represented as an object
-with a rank and suit attribute. The Deck class handles building a 52 card deck,
-removing known cards, shuffling, and dealing. `__eq__` and `__hash__` are
-implemented so cards can be compared correctly and stored in sets for O(1)
-lookup.
-
-### src/evaluator.py
-Contains `evaluate_hand`, `best_hand`, `best_hand_cards`, and `describe_hand`.
-`evaluate_hand` takes exactly 5 cards and returns a tuple of (hand rank,
-tiebreaker) where hand rank is a number from 1 (High Card) to 9 (Straight
-Flush) and tiebreaker is a list of card indices sorted highest to lowest.
-Returning a tuple means two hands of the same type are compared correctly
-through Python's built-in tuple comparison. `best_hand` tries every possible
-5 card combination from 7 available cards to find the strongest. `best_hand_cards`
-returns the actual 5 cards making that hand. `describe_hand` identifies the
-current hand type or draw in plain English.
-
-### src/equity.py
-Runs the equity calculation. Pre-flop and flop use Monte Carlo simulation with
-10,000 runs. Turn and river in heads up play switch to exact enumeration for
-a perfect result. Dead cards from folded players and known opponent hands are
-both removed from the deck before any simulation runs so they cannot appear
-in simulated boards or opponent hands.
-
-### src/decision.py
-Takes equity, tie rate, pot size, bet to call, and stack size and returns an
-action and explanation. Pot odds are calculated as bet / (pot + bet). Raise
-amounts are calculated as the minimum of a pot-based amount and a stack-based
-amount. Absolute equity floors are enforced so the program never recommends
-raising on a weak hand regardless of pot odds. All-in is only suggested when
-equity clears 65%.
-
-### src/session.py
-Handles session logging, schema migrations, and statistics using SQLite via Python's built-in `sqlite3` module. `log_hand` saves the hand and its decision history in one transaction. `get_stats` reports hand and decision follow rates, split outcomes, and net profit for hands with known costs and payouts. Historical win-rate comparisons are descriptive; they do not establish that following the heuristic improves results.
-
-### main.py
-Entry point for the program. Handles all user input with validation loops,
-duplicate card prevention, and pot and stack sanity checks between streets.
-Manages both single calculation and continuous game mode, including fold
-tracking, dead card memory, and all-in detection across streets.
-
-## Design Decisions
-
-**Monte Carlo over exact enumeration pre-flop and flop** - pre-flop there are over 1.7 million possible board runouts. Monte Carlo trades perfect accuracy for speed and scales easily to any number of players. 10,000 simulations gives results accurate to within 1-2% in practice. Exact enumeration is used on the turn and river in heads up play where the number of combinations is small enough to compute perfectly.
-
-**Tuple return from evaluate_hand** - returning `(hand_rank, tiebreaker)` instead of just a number means Python's built-in tuple comparison handles all tiebreaking automatically. An Ace high flush beats a King high flush without any additional comparison logic needed.
-
-**Raise sizing based on both pot and stack** - a raise recommendation based only on pot size can suggest amounts larger than a safe fraction of the player's remaining chips. Sizing off the minimum of pot-based and stack-based amounts keeps recommendations realistic. The minimum raise is also enforced so the suggested raise never falls below the size of the current bet to call.
-
-**Absolute equity floors** - pot odds alone can justify aggressive action with weak hands if the pot is large relative to the bet. Absolute equity floors ensure the program never recommends raising below a minimum win probability regardless of pot odds.
-
-**Dead cards vs known opponents** - cards shown by folded players are tracked separately from active known opponent hands. Folded cards are removed from the deck as dead cards but the folder is not simulated as an active opponent. This correctly models two separate effects: fewer cards available in the deck, and fewer players competing for the pot.
-
-## Future Ideas
-
-- Position-based recommendation adjustments - factor in acting position when suggesting raise sizes and aggression levels, since acting last provides an informational advantage worth exploiting
-- SQL query interface - expose session data for custom queries and deeper hand history analysis
-
-## Requirements
-
-No external libraries required. Uses Python's standard library, including
-random, itertools, sqlite3, json, and unittest.
+AI assistance was used for code cleanup, major debugging, regression tests, and
+documentation updates.
 
 ## Author
 
 **Ryan Feng**
-Cornell University | B.A. Mathematics, Minor: Computer Science | Class of 2029
+Cornell University | B.A. Mathematics | Class of 2029
 
 - LinkedIn: [linkedin.com/in/ryanneefeng](https://linkedin.com/in/ryanneefeng)
 - Email: ryanneefeng@gmail.com
