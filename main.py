@@ -5,16 +5,17 @@ from math import isfinite
 from src.evaluator import describe_hand, best_hand_cards
 from src.session import log_hand, get_stats
 from src.pots import create_players, add_chips, get_call_amount, get_opponent_limit
-from src.pots import build_side_pots, return_uncalled_chips, calculate_pot_equity, calculate_call_equity
+from src.pots import build_side_pots, return_uncalled_chips, calculate_pot_equity, calculate_call_equity, project_pot_equity
 
 def display_projections(projections, base_equity):
     if not projections:
         return
-    print("  Key cards next street:")
+    print("  Key cards next street (Monte Carlo estimates; sampling noise may affect ranking):")
+    print(f"    Sampled baseline: {base_equity*100:.1f}%")
     for card, equity in projections:
         change = equity - base_equity
         direction = "+" if change >= 0 else ""
-        print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f}%)")
+        print(f"    {card} -> {equity*100:.1f}% ({direction}{change*100:.1f} percentage points)")
 
 def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_cards=None, board=None, projections=None, base_equity=None,
                     current_contribution=0, last_raise=None, big_blind=1, can_raise=True, opponent_limit=None, call_cost=None):
@@ -31,15 +32,69 @@ def display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, hole_ca
             print(f"  Best 5:     {best_str}")
     print(f"  Equity:     {equity * 100:.1f}%")
     print(f"  Tie Rate:   {tie_rate * 100:.1f}%")
+    if projections and base_equity is not None:
+        display_projections(projections, base_equity)
     print(f"  Action:     {action}")
     print(f"  Reason:     {explanation}")
     print("===========================================")
     return action
 
-def get_pot_info(all_in=False, remaining_stack=None):
+def get_exposed_cards(players, position, used_cards, seats=None):
+    available = [seat for seat, player in players.items() if seat != position and
+                 (seats is None or seat in seats) and len(player.get("hand", [])) < 2]
+    if not available:
+        print("All opponent cards are already recorded.")
+        return
     while True:
         try:
-            pot_size = float(input("\nCurrent pot size: $"))
+            seat = int(input(f"Seat showing cards ({', '.join(map(str, available))}): "))
+            if seat in available:
+                break
+        except ValueError:
+            pass
+        print("Choose an opponent seat with unrevealed cards.")
+    hand = list(players[seat].get("hand", []))
+    while True:
+        try:
+            count = int(input(f"How many NEW exposed cards (1-{2 - len(hand)})? "))
+            if 1 <= count <= 2 - len(hand):
+                break
+        except ValueError:
+            pass
+        print("Enter the number of newly exposed cards.")
+    hand.extend(get_card_input(f"Exposed card {i + 1}: ", used_cards) for i in range(count))
+    players[seat]["hand"] = hand
+    state = "folded; cards removed from the deck" if players[seat]["folded"] else "live; still competes for eligible pots"
+    print(f"  Seat {seat}: {', '.join(map(str, hand))} ({state}).")
+
+
+def input_with_cards(prompt, players=None, position=None, used_cards=None):
+    while True:
+        value = input(prompt).strip()
+        if value.lower() == "cards" and players is not None:
+            get_exposed_cards(players, position, used_cards)
+        else:
+            return value
+
+
+def record_folded_cards(players, position, used_cards, seats):
+    remaining = [seat for seat in seats if len(players[seat].get("hand", [])) < 2]
+    while remaining:
+        showed = input("Record newly exposed cards from these folded seats? (y/n): ").lower().strip()
+        if showed == "n":
+            return
+        if showed != "y":
+            print("Please enter y or n.")
+            continue
+        get_exposed_cards(players, position, used_cards, remaining)
+        remaining = [seat for seat in remaining if len(players[seat].get("hand", [])) < 2]
+
+
+def get_pot_info(all_in=False, remaining_stack=None, *, players=None, position=None, used_cards=None):
+    while True:
+        try:
+            pot_size = float(input_with_cards("\nCurrent pot size (or 'cards' to record exposed cards): $",
+                                             players, position, used_cards))
             if not isfinite(pot_size) or pot_size < 0:
                 print("Please enter a finite, nonnegative pot size.")
                 continue
@@ -282,7 +337,8 @@ def handle_folds_before(num_players, known_opponents, dead_cards, used_cards, ac
         if foldable == 0:
             return num_players, known_opponents, dead_cards
     while True:
-        folded = input("\nDid anyone fold or reveal cards before your turn this street? (y/n): ").lower().strip()
+        folded = input_with_cards("\nDid anyone fold before your turn? (y/n, or 'cards' for exposed cards): ",
+                                  players, position, used_cards).lower()
         if folded in ["y", "n"]:
             break
         print("Please enter y or n.")
@@ -300,10 +356,15 @@ def handle_folds_before(num_players, known_opponents, dead_cards, used_cards, ac
         except ValueError:
             print("Please enter a valid number.")
 
+    before_folds = set(active_positions or [])
     remove_folded_positions(num_folded, active_positions, position, players)
     num_players -= num_folded
 
     if num_players == 1:
+        return num_players, known_opponents, dead_cards
+
+    if players is not None:
+        record_folded_cards(players, position, used_cards, before_folds - set(active_positions))
         return num_players, known_opponents, dead_cards
 
     while True:
@@ -343,7 +404,8 @@ def handle_folds(num_players, known_opponents, dead_cards, used_cards, active_po
         if foldable == 0:
             return num_players, known_opponents, dead_cards
     while True:
-        folded = input("\nDid anyone fold this round? (y/n): ").lower().strip()
+        folded = input_with_cards("\nDid anyone fold this round? (y/n, or 'cards' for exposed cards): ",
+                                  players, position, used_cards).lower()
         if folded in ["y", "n"]:
             break
         print("Please enter y or n.")
@@ -361,11 +423,16 @@ def handle_folds(num_players, known_opponents, dead_cards, used_cards, active_po
         except ValueError:
             print("Please enter a valid number.")
 
+    before_folds = set(active_positions or [])
     remove_folded_positions(num_folded, active_positions, position, players)
     num_players -= num_folded
 
     # If everyone else folded, no need to ask about shown cards
     if num_players == 1:
+        return num_players, known_opponents, dead_cards
+
+    if players is not None:
+        record_folded_cards(players, position, used_cards, before_folds - set(active_positions))
         return num_players, known_opponents, dead_cards
 
     while True:
@@ -442,7 +509,8 @@ def ask_action_reopened():
 def run_betting_round(street_label, num_players, known_opponents, dead_cards, used_cards,
                        player_hand, board, is_all_in, prev_pot, prev_stack,
                        show_projections=False, skip_first_folds_before=False,
-                       active_positions=None, position=None, big_blind=1, players=None, dead_money=0):
+                       active_positions=None, position=None, big_blind=1, players=None, dead_money=0,
+                       decision_history=None):
     """
     Runs the user's decision(s) for a single street.
 
@@ -495,7 +563,8 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
         else:
             remaining_stack = players[position]["stack"] if players is not None and players[position]["seen"] else None
             pot_size, bet_to_call, stack_size = get_pot_info(
-                all_in=is_all_in, remaining_stack=remaining_stack if players is not None else (prev_stack if action_returned else None)
+                all_in=is_all_in, remaining_stack=remaining_stack if players is not None else (prev_stack if action_returned else None),
+                players=players, position=position, used_cards=used_cards,
             )
             if players is not None:
                 if current_contribution is None:
@@ -542,6 +611,19 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
                 player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
             )
 
+        projections, base_equity = None, None
+        if show_projections and len(board) in (3, 4):
+            if players is not None:
+                projection_result = project_pot_equity(
+                    player_hand, board, players, position, bet_to_call, dead_cards, dead_money=dead_money
+                )
+            else:
+                projection_result = project_next_street(
+                    player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
+                )
+            if projection_result:
+                projections, base_equity = projection_result
+
         if is_all_in or auto_runout:
             hand_desc = describe_hand(player_hand, board)
             print("\n===========================================")
@@ -554,6 +636,8 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
             print(f"  Equity:     {equity * 100:.1f}% ({status})")
             if pot_result is not None:
                 display_pots(pot_result, position)
+            if projections and base_equity is not None:
+                display_projections(projections, base_equity)
             print("===========================================")
             # No more decisions once you're all-in, but others can still
             # fold among themselves before the next card is dealt.
@@ -583,19 +667,24 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
             print("  No opponent has chips to contest another raise.")
         if pot_result is not None:
             display_pots(pot_result, position)
-        if show_projections and players is None:
-            projections, base_equity = project_next_street(
-                player_hand, board, num_players, known_opponents=known_opponents, dead_cards=dead_cards
-            )
-            action = display_results(equity, tie_rate, pot_size, bet_to_call, stack_size, player_hand, board, projections, base_equity,
-                                     current_contribution, last_raise, big_blind, can_raise)
-        else:
-            action = display_results(equity, tie_rate, decision_pot, bet_to_call, stack_size, player_hand, board,
-                                     current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind,
-                                     can_raise=can_raise, opponent_limit=opponent_limit,
-                                     call_cost=pot_result["call_cost"] if pot_result is not None else None)
+        action = display_results(equity, tie_rate, decision_pot, bet_to_call, stack_size, player_hand, board,
+                                 projections, base_equity, current_contribution=current_contribution,
+                                 last_raise=last_raise, big_blind=big_blind, can_raise=can_raise,
+                                 opponent_limit=opponent_limit,
+                                 call_cost=pot_result["call_cost"] if pot_result is not None else None)
 
         player_action = get_player_action(action, bet_to_call, stack_size, can_raise)
+        decision = {
+            "street": street_label, "board": list(board), "equity": equity,
+            "recommendation": action, "player_action": player_action,
+            "pot_size": pot_size, "bet_to_call": bet_to_call, "stack_before": stack_size,
+            "contribution_before": current_contribution, "chips_added": 0,
+            "raise_to": None, "stack_after": stack_size,
+            "players": {p: {key: [str(c) for c in value] if key == "hand" else value
+                             for key, value in player.items()} for p, player in (players or {}).items()},
+        }
+        if decision_history is not None:
+            decision_history.append(decision)
         if player_action == "fold":
             if players is not None:
                 players[position]["folded"] = True
@@ -613,6 +702,8 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
             chips_added = round(raise_amount - current_contribution, 2)
         elif player_action == "call":
             chips_added = min(bet_to_call, stack_size)
+        decision.update(chips_added=chips_added, stack_after=round(stack_size - chips_added, 2),
+                        raise_to=raise_amount if player_action == "raise" else None)
         current_contribution = round(current_contribution + chips_added, 2)
         if players is not None:
             add_chips(players[position], chips_added)
@@ -658,11 +749,68 @@ def run_betting_round(street_label, num_players, known_opponents, dead_cards, us
         "equity": equity, "action": action, "player_action": player_action,
     }
 
+def get_optional_money(prompt, maximum=None):
+    while True:
+        raw = input(prompt).strip()
+        if not raw:
+            return None
+        try:
+            amount = float(raw)
+            if isfinite(amount) and amount >= 0 and (maximum is None or amount <= maximum):
+                return round(amount, 2)
+        except ValueError:
+            pass
+        print("Enter a finite, nonnegative amount within the pot, or leave blank.")
+
+
+def get_settlement(players, position, dead_money, outcome):
+    """Record actual payouts; omitted amounts remain unknown rather than zero."""
+    hero = players[position]
+    contribution = hero["contribution"] if hero["seen"] else None
+    if dead_money and contribution is not None:
+        ante = get_optional_money("Your share of antes/dead money paid (Enter if unknown): $", dead_money)
+        contribution = round(contribution + ante, 2) if ante is not None else None
+    if outcome == "folded":
+        return {"outcome": outcome, "contribution": contribution, "payout": 0, "pots": None, "players": players}
+    pots, refunds = build_side_pots(players, dead_money)
+    while True:
+        payout = 0 if hero["seen"] else None
+        for i, pot in enumerate(pots):
+            if position not in pot["eligible"]:
+                pot["payout"] = 0
+            elif outcome == "won_by_fold":
+                pot["payout"] = pot["amount"]
+            elif outcome == "lost":
+                pot["payout"] = 0
+            else:
+                pot["payout"] = get_optional_money(
+                    f"Your payout from pot {i + 1} (${pot['amount']}; exclude returned wagers; Enter to skip): $",
+                    pot["amount"],
+                )
+            if pot["payout"] is None:
+                payout = None
+            elif payout is not None:
+                payout = round(payout + pot["payout"], 2)
+        if payout == 0 and pots and outcome in {"won", "split"}:
+            print("A win or split must include a positive payout. Re-enter payouts, or leave unknown amounts blank.")
+            continue
+        break
+    if not pots and outcome in {"won", "split", "won_by_fold"}:
+        payout = None
+    # Uncalled wagers are refunds, not winnings or chips at risk.
+    if contribution is not None:
+        contribution = round(contribution - refunds.get(position, 0), 2)
+    return {"outcome": outcome, "contribution": contribution, "payout": payout, "pots": pots, "players": players}
+
+
 def continuous_game(num_players, player_hand, known_opponents=None, used_cards=None):
     if known_opponents is None:
         known_opponents = []
     if used_cards is None:
         used_cards = set()
+    used_cards.update(player_hand)
+    for hand in known_opponents:
+        used_cards.update(hand)
     dead_cards = []
     is_all_in = False
 
@@ -670,6 +818,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
     equity = 0.0
     action = ""
     player_action = ""
+    decision_history = []
 
     big_blind = get_money_input("Big blind size: $", 0.01)
     position, position_label = get_position(num_players)
@@ -709,20 +858,20 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
             for player in players.values():
                 player["street_contribution"] = 0
         if street_label == "Flop":
-            input("Press Enter to continue to the Flop...")
+            input_with_cards("Press Enter for the Flop, or 'cards' to record exposed cards: ", players, position, used_cards)
             print("\nEnter the 3 Flop cards:")
             flop = [get_card_input(f"Flop card {i + 1}: ", used_cards) for i in range(3)]
             board = flop
             print("\n-- FLOP --")
             display_acting_order(table_size, position, "postflop", active_positions, players)
         elif street_label == "Turn":
-            input("Press Enter to continue to the Turn...")
+            input_with_cards("Press Enter for the Turn, or 'cards' to record exposed cards: ", players, position, used_cards)
             turn = get_card_input("\nTurn card: ", used_cards)
             board = board + [turn]
             print("\n-- TURN --")
             display_acting_order(table_size, position, "postflop", active_positions, players)
         elif street_label == "River":
-            input("Press Enter to continue to the River...")
+            input_with_cards("Press Enter for the River, or 'cards' to record exposed cards: ", players, position, used_cards)
             river = get_card_input("\nRiver card: ", used_cards)
             board = board + [river]
             print("\n-- RIVER --")
@@ -734,6 +883,7 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
             show_projections=show_projections, skip_first_folds_before=skip_first_folds_before,
             active_positions=active_positions, position=position, big_blind=big_blind,
             players=players, dead_money=dead_money,
+            decision_history=decision_history,
         )
         num_players = result["num_players"]
         known_opponents = result["known_opponents"]
@@ -742,27 +892,33 @@ def continuous_game(num_players, player_hand, known_opponents=None, used_cards=N
         prev_pot = result["prev_pot"]
         prev_stack = result["prev_stack"]
         equity = result["equity"]
-        action = result["action"]
-        player_action = result["player_action"]
+        if result["player_action"]:
+            action = result["action"]
+            player_action = result["player_action"]
 
         if result["status"] == "won_by_fold":
             print("Everyone folded. You win the pot!")
-            log_hand(player_hand, board, num_players, equity, action, player_action, True)
+            equity = 1.0
+            log_hand(player_hand, board, num_players, equity, action, player_action, True,
+                     history=decision_history, **get_settlement(players, position, dead_money, "won_by_fold"))
             print("\nHand logged.")
             return
         if result["status"] == "folded":
-            log_hand(player_hand, board, num_players, equity, action, player_action, False)
+            log_hand(player_hand, board, num_players, equity, action, player_action, False,
+                     history=decision_history, **get_settlement(players, position, dead_money, "folded"))
             print("\nHand logged.")
             return
 
     while True:
-        won_input = input("\nDid you win any share of a pot? (y/n): ").lower().strip()
-        if won_input in ["y", "n"]:
+        won_input = input("\nHand result (win/loss/split; y/n also accepted): ").lower().strip()
+        outcomes = {"y": "won", "win": "won", "n": "lost", "loss": "lost", "split": "split"}
+        if won_input in outcomes:
             break
-        print("Please enter y or n.")
+        print("Please enter win, loss, or split.")
 
     print("\nHand complete!")
-    log_hand(player_hand, board, num_players, equity, action, player_action, won_input == "y")
+    log_hand(player_hand, board, num_players, equity, action, player_action, outcomes[won_input] != "lost",
+             history=decision_history, **get_settlement(players, position, dead_money, outcomes[won_input]))
     print("Hand logged.")
 
 def parse_card(card_str):
@@ -814,7 +970,7 @@ def display_acting_order(num_players, position, street, active_positions=None, p
     for i in range(4, num_players - 1 if num_players >= 5 else num_players):
         position_labels[i] = f"UTG+{i-3}"
 
-    order_str = " → ".join([position_labels.get(p, str(p)) + f" [seat {p}]" + (" (YOU)" if p == position else "") for p in order])
+    order_str = " -> ".join([position_labels.get(p, str(p)) + f" [seat {p}]" + (" (YOU)" if p == position else "") for p in order])
     print(f"  Acting order: {order_str if order else 'No players have chips left to bet'}")
     if position in order:
         print(f"  You act {order.index(position) + 1} of {len(order)}")
@@ -850,10 +1006,15 @@ def main():
                 print("           Session Statistics")
                 print("===========================================")
                 print(f"  Total hands played:       {stats['total_hands']}")
-                print(f"  Wins:                     {stats['wins']}")
-                print(f"  Win rate:                 {stats['win_rate']}%")
+                print(f"  Hands winning any share:  {stats['wins']}")
+                print(f"  Any-share win rate:       {stats['win_rate']}%")
                 print(f"  Average final equity:     {stats['avg_equity']}%")
-                print(f"  Followed recommendation:  {stats['follow_rate']}%")
+                print(f"  Followed all recorded advice: {stats['follow_rate']}% ({stats['evaluated_hands']} evaluated hands)")
+                if stats["decision_follow_rate"] is not None:
+                    print(f"  Decision follow rate:     {stats['decision_follow_rate']}% ({stats['decision_count']} decisions)")
+                print(f"  Split outcomes:           {stats['splits']}")
+                if stats["net_profit"] is not None:
+                    print(f"  Recorded net profit:      ${stats['net_profit']:.2f} ({stats['measured_hands']} hands with known payouts/costs)")
                 print(f"  Win rate when followed:   {stats['followed_win_rate']}%")
                 print(f"  Win rate when deviated:   {stats['deviated_win_rate']}%")
                 print("===========================================\n")
@@ -904,7 +1065,8 @@ def main():
             known_opponents = []
             won_by_fold = False
             while True:
-                has_revealed = input("\nHave any players revealed their cards (folded and shown)? (y/n): ").lower().strip()
+                has_revealed = input_with_cards("\nAny folded-and-shown players? (y/n; 'cards' for live or single exposed cards): ",
+                                                players, 1, used_cards).lower()
                 if has_revealed == "y":
                     while True:
                         try:
@@ -925,11 +1087,13 @@ def main():
                     for seat in range(2, num_revealed + 2):
                         players[seat]["folded"] = True
                     for i in range(num_revealed):
-                        print(f"\nEnter the 2 cards for player {i + 1} who revealed:")
-                        card1 = get_card_input("Card 1: ", used_cards)
-                        card2 = get_card_input("Card 2: ", used_cards)
-                        dead_cards.append(card1)
-                        dead_cards.append(card2)
+                        seat = i + 2
+                        hand = list(players[seat].get("hand", []))
+                        print(f"\nEnter any remaining cards for folded seat {seat}:")
+                        for card_index in range(len(hand), 2):
+                            hand.append(get_card_input(f"Card {card_index + 1}: ", used_cards))
+                        players[seat]["hand"] = hand
+                        dead_cards.extend(hand)
                     break
                 elif has_revealed == "n":
                     break
@@ -937,7 +1101,7 @@ def main():
                     print("Please enter y or n.")
 
             if not won_by_fold:
-                pot_size, bet_to_call, stack_size = get_pot_info()
+                pot_size, bet_to_call, stack_size = get_pot_info(players=players, position=1, used_cards=used_cards)
                 big_blind = get_money_input("Big blind size: $", 0.01)
                 current_contribution = get_money_input("Your chips already committed this street (including blinds): $")
                 dead_money = get_money_input("Antes/dead money included in the pot (exclude bets): $")
@@ -956,7 +1120,13 @@ def main():
                 else:
                     result = calculate_call_equity(player_hand, board, players, 1, bet_to_call, dead_cards, dead_money=dead_money)
                     display_pots(result, 1)
+                    projections, base_equity = None, None
+                    if len(board) in (3, 4):
+                        projections, base_equity = project_pot_equity(
+                            player_hand, board, players, 1, bet_to_call, dead_cards, dead_money=dead_money
+                        )
                     display_results(result["equity"], result["tie_rate"], result["decision_pot"], bet_to_call, stack_size, player_hand, board,
+                                     projections, base_equity,
                                      current_contribution=current_contribution, last_raise=last_raise, big_blind=big_blind,
                                      opponent_limit=get_opponent_limit(players, 1), call_cost=result["call_cost"])
 

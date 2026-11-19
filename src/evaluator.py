@@ -118,8 +118,6 @@ def describe_hand(hole_cards, board):
         # Check for draws on top of made hand
         draws = []
         all_suits = [card.suit for card in all_cards]
-        all_ranks = [card.rank for card in all_cards]
-        all_indices = sorted([RANKS.index(r) for r in all_ranks])
 
         # Flush draw - 4 cards of same suit
         for suit in SUITS:
@@ -128,39 +126,27 @@ def describe_hand(hole_cards, board):
                 break
 
         # Backdoor flush draw - 3 cards of same suit
-        if "Flush Draw" not in draws:
+        if num_board_cards == 3 and hand_rank < HAND_RANKINGS["Flush"] and "Flush Draw" not in draws:
             for suit in SUITS:
                 if all_suits.count(suit) == 3:
                     draws.append("Backdoor Flush Draw")
                     break
 
-        # Straight draws
-        unique_indices = sorted(set(all_indices))
-        found_straight_draw = False
-        for i in range(len(unique_indices) - 3):
-            window = unique_indices[i:i+4]
-            span = window[-1] - window[0]
-            if span == 3:
-                draws.append("Open Ended Straight Draw")
-                found_straight_draw = True
-                break
-            elif span == 4:
+        # Find ranks that complete a straight, including the wheel. Counting
+        # completion ranks also distinguishes double gutshots from open ends.
+        if hand_rank < HAND_RANKINGS["Straight"]:
+            ranks = {RANKS.index(card.rank) + 2 for card in all_cards}
+            straights = [{14, 2, 3, 4, 5}] + [set(range(low, low + 5)) for low in range(2, 11)]
+            outs = set()
+            for straight in straights:
+                missing = straight - ranks
+                if len(missing) == 1:
+                    outs.update(missing)
+            if len(outs) >= 2:
+                open_ended = any(set(range(low, low + 4)) <= ranks for low in range(2, 11))
+                draws.append("Open Ended Straight Draw" if open_ended else "Double Gutshot Straight Draw")
+            elif outs:
                 draws.append("Gutshot Straight Draw")
-                found_straight_draw = True
-                break
-
-        # Ace-low straight draw check
-        if not found_straight_draw and 12 in unique_indices:
-            ace_low = sorted([0] + [i for i in unique_indices if i != 12])
-            for i in range(len(ace_low) - 3):
-                window = ace_low[i:i+4]
-                span = window[-1] - window[0]
-                if span == 3:
-                    draws.append("Open Ended Straight Draw")
-                    break
-                elif span == 4:
-                    draws.append("Gutshot Straight Draw")
-                    break
 
         if draws:
             return f"{made} with {' and '.join(draws)}"

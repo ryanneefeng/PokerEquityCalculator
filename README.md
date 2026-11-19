@@ -18,11 +18,12 @@ interest in probability and quantitative decision making.
 - **Monte Carlo Simulation** - 10,000 simulations pre-flop and flop, exact enumeration on turn and river in heads up play for perfect accuracy. Multi-street projections always use Monte Carlo for speed.
 - **Full Hand Evaluator** - detects all hand types from High Card to Straight Flush including ace-low straights with correct tiebreaker logic
 - **Hand Descriptor** - identifies your current hand or draw at each street and shows the exact 5 cards making your best hand
-- **Multi-Street Projection** - shows how equity shifts if specific cards hit next street, highlighting the biggest gainers and losers
+- **Multi-Street Projection** - shows estimated equity shifts for the next board card on the flop and turn in both modes, weighted by the pots you can win
 - **Decision Engine** - recommends fold, call, raise, or all-in based on pot odds, equity, and remaining stack with stack-aware raise sizing
 - **Continuous Game Mode** - follows a full hand from pre-flop through the river with live equity updates, fold tracking, dead card removal, and action logging
 - **Input Safety** - duplicate card prevention, pot and stack sanity checks between streets, and full input validation throughout
-- **Session Logging** - automatically logs every continuous mode hand to a JSON file including hole cards, board, equity, recommendation, action taken, and outcome
+- **Session Logging** - saves every hero decision, repeated actions on the same street, split outcomes, optional per-pot payouts, and net profit when costs and payouts are known
+- **Exposed Opponent Cards** - records one or two exposed cards by seat for live, all-in, or folded opponents; live partial hands are completed from the remaining deck
 - **Position Awareness** - tracks your seat position and displays acting order at each street, distinguishing between folds that occurred before and after your action so equity is calculated with accurate information
 - **Opponent Stacks** - keeps each seat's remaining chips and contributions, so all-in players stay in the hand without receiving another betting turn
 - **Main and Side Pots** - separates pots by matched contributions, retains folded money, returns uncalled wagers, and calculates your equity only in pots you can win
@@ -64,6 +65,31 @@ can build on the same information without changing the betting structure.
 Call advice uses currently funded pots and excludes newly uncalled money expected
 to return; it does not predict additional calls or folds from other players.
 
+Type `cards` at the pot-size prompt, either fold prompt, the single-mode
+folded-and-shown prompt, or a between-street continuation prompt to record
+exposed cards. Choose the opponent's fixed seat and enter only newly revealed
+cards. Showing cards does not fold a live opponent. A folded seat's exposed
+cards stay unavailable to the board and other hands. You can enter one card
+now and the second later; unknown cards remain uniformly random.
+
+At showdown, enter `win`, `loss`, or `split` (`y`/`n` still work). For a win or
+split, optionally enter your actual payout from each eligible pot. Exclude
+returned uncalled wagers. Leave an unknown payout blank. If antes/dead money
+were entered separately, give your share of that cost or leave it unknown.
+Net profit is calculated only when both total cost and payout are known.
+Winning a small pot can still produce a negative net result for the hand.
+
+Existing `session.db` files migrate automatically without deleting hands.
+The `decisions` table stores each recommendation, action, street, board, equity,
+call amount, raise total, chips added, remaining stack, and seat snapshot.
+The `hands` table stores the outcome, costs, payouts, net profit, and pot details.
+Earlier hands retain their original summaries; their missing decision history
+and payouts cannot be reconstructed. Empty actions are excluded from follow
+rates. Hand follow rate means all recorded decisions matched advice; decision
+follow rate counts individual decisions from the new history records. Win rates
+count hands winning any pot share, including splits; profit totals show how many
+hands have complete cost/payout records.
+
 ## How It Works
 
 The program offers two modes. In single calculation mode the user inputs their hole cards, the current board state, any revealed cards from folded players, pot size, bet to call, and remaining stack. The program runs 10,000 Monte Carlo simulations and outputs an equity percentage, tie rate, and recommended action with a suggested raise amount.
@@ -79,6 +105,32 @@ python main.py
 ```
 
 No external libraries required.
+
+## Tests
+
+```bash
+python run_tests.py
+```
+
+The standard-library runner discovers the plain test functions in `tests/`,
+uses a fixed random seed, and redirects session tests to a temporary database.
+It leaves your saved hand history untouched.
+
+Draw descriptions distinguish gutshots, open-ended draws, and double gutshots,
+including ace-low straights. Backdoor flush draws are shown only on the flop;
+made straights do not receive redundant straight-draw labels.
+
+Next-card projections use 300 Monte Carlo trials per candidate and a separate
+sampled baseline. The displayed changes are percentage points; sampling noise
+can affect their order. Projections retain known and dead card removal, assume
+the current call is paid, and weight only eligible main/side pots. They do not
+predict further betting or folds.
+
+The equity API rejects duplicate/invalid cards, invalid player and simulation
+counts, malformed hands/boards, and states with too few remaining cards. Each
+known opponent may have one or two exposed cards; your own hand needs two.
+Direct exact-turn/river helpers support at most one incomplete opponent; use
+`calculate_equity` for multiway hands so they use Monte Carlo.
 
 ## Example Session
 
@@ -374,7 +426,7 @@ raising on a weak hand regardless of pot odds. All-in is only suggested when
 equity clears 65%.
 
 ### src/session.py
-Handles session logging and statistics using SQLite via Python's built-in `sqlite3` module. `log_hand` inserts each completed continuous mode hand into a local `session.db` database. `get_stats` queries the database to return win rate, recommendation follow rate, average equity, and a breakdown of win rate when following vs deviating from recommendations.
+Handles session logging, schema migrations, and statistics using SQLite via Python's built-in `sqlite3` module. `log_hand` saves the hand and its decision history in one transaction. `get_stats` reports hand and decision follow rates, split outcomes, and net profit for hands with known costs and payouts. Historical win-rate comparisons are descriptive; they do not establish that following the heuristic improves results.
 
 ### main.py
 Entry point for the program. Handles all user input with validation loops,
@@ -401,8 +453,8 @@ tracking, dead card memory, and all-in detection across streets.
 
 ## Requirements
 
-No external libraries required. Uses only Python built-in modules: random
-and itertools.
+No external libraries required. Uses Python's standard library, including
+random, itertools, sqlite3, json, and unittest.
 
 ## Author
 

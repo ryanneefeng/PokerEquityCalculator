@@ -89,3 +89,12 @@ def test_folds_after_action_update_active_seats_and_count():
         num_players, known, dead = handle_folds(6, [], [], set(), active_positions, 6)
     assert num_players == 5
     assert active_positions == [2, 3, 4, 5, 6]
+
+
+def test_acting_order_can_print_to_windows_cp1252_output():
+    output = io.BytesIO()
+    stream = io.TextIOWrapper(output, encoding="cp1252")
+    with redirect_stdout(stream):
+        display_acting_order(2, 1, "preflop")
+        stream.flush()
+        assert b" -> " in output.getvalue()

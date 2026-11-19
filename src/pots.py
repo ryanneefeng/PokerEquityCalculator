@@ -1,5 +1,5 @@
 from math import isfinite
-from src.equity import calculate_equity
+from src.equity import calculate_equity, monte_carlo_equity, project_next_street
 
 def create_players(num_players):
     players = {}
@@ -89,7 +89,8 @@ def return_uncalled_chips(players):
         player["stack"] = round((player["stack"] or 0) + amount, 2)
     return refunds
 
-def calculate_pot_equity(player_hand, board, players, position, dead_cards=None, simulations=10000, dead_money=0):
+def calculate_pot_equity(player_hand, board, players, position, dead_cards=None, simulations=10000, dead_money=0,
+                         *, monte_carlo=False):
     if dead_cards is None:
         dead_cards = []
     pots, refunds = build_side_pots(players, dead_money)
@@ -112,7 +113,8 @@ def calculate_pot_equity(player_hand, board, players, position, dead_cards=None,
                         known_opponents.append(player["hand"])
                     else:
                         removed_cards.extend(player["hand"])
-                equity, tie_rate = calculate_equity(
+                calculate = monte_carlo_equity if monte_carlo else calculate_equity
+                equity, tie_rate = calculate(
                     player_hand, board, len(pot["eligible"]), known_opponents=known_opponents,
                     dead_cards=list(set(removed_cards)), simulations=simulations
                 )
@@ -140,3 +142,35 @@ def calculate_call_equity(player_hand, board, players, position, bet_to_call, de
     # Only matched chips are at risk if no further opponent adds money.
     result["decision_pot"] = round(result["eligible_pot"] - result["call_cost"], 2)
     return result
+
+
+def project_pot_equity(player_hand, board, players, position, bet_to_call=0, dead_cards=None,
+                       simulations=300, dead_money=0):
+    """Project weighted eligible equity after the current call, without future bets."""
+    if len(board) not in (3, 4):
+        return []
+    projected = {seat: dict(player) for seat, player in players.items()}
+    add_chips(projected[position], min(bet_to_call, projected[position]["stack"]))
+    known_opponents = []
+    removed_cards = list(dead_cards or [])
+    for seat, player in projected.items():
+        if seat == position or not player.get("hand"):
+            continue
+        if player["folded"]:
+            removed_cards.extend(player["hand"])
+        else:
+            known_opponents.append(player["hand"])
+    num_players = sum(not player["folded"] for player in projected.values())
+    if num_players < 2:
+        return []
+
+    def estimate(candidate_board):
+        return calculate_pot_equity(
+            player_hand, candidate_board, projected, position, dead_cards,
+            simulations, dead_money, monte_carlo=True,
+        )["equity"]
+
+    return project_next_street(
+        player_hand, board, num_players, known_opponents, list(set(removed_cards)), simulations,
+        equity_calculator=estimate,
+    )
